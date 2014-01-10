@@ -174,31 +174,43 @@ static PyObject * m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kw
         return NULL;
     }
 
-    if (PyDelta_Check(new_time)) {
-            msec = PyDateTime_DELTA_GET_MICROSECONDS(new_time);
-    } else if (PyLong_Check(new_time)) {
-            msec = PyLong_AsLong(new_time);
-    } else {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "deadline is not a valid type. Must be a timedelta object or integer");
-        return NULL;
+    new_val.it_value.tv_sec = 0;
+    new_val.it_value.tv_nsec = 0;
+    if (new_time != NULL) {
+        Py_INCREF(new_time);
+        if (PyDelta_Check(new_time)) {
+                msec = PyDateTime_DELTA_GET_MICROSECONDS(new_time);
+        } else if (PyLong_Check(new_time)) {
+                msec = PyLong_AsLong(new_time);
+        } else {
+            Py_DECREF(new_time);
+            PyErr_SetString(
+                PyExc_TypeError,
+                "deadline is not a valid type. Must be a timedelta object or integer");
+            return NULL;
+        }
+        Py_DECREF(new_time);
     }
-
     new_val.it_value.tv_sec = msec / 1000;
     new_val.it_value.tv_nsec = (msec % 1000) * 1000000;
 
-    if (PyDelta_Check(new_inter)) {
-            msec = PyDateTime_DELTA_GET_MICROSECONDS(new_inter);
-    } else if (PyLong_Check(new_inter)) {
-            msec = PyLong_AsLong(new_inter);
-    } else {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "interval is not a valid type. Must be a timedelta object or integer");
-        return NULL;
+    new_val.it_interval.tv_sec = 0;
+    new_val.it_interval.tv_nsec = 0;
+    if (new_inter != NULL) {
+        Py_INCREF(new_inter);
+        if (PyDelta_Check(new_inter)) {
+                msec = PyDateTime_DELTA_GET_MICROSECONDS(new_inter);
+        } else if (PyLong_Check(new_inter)) {
+                msec = PyLong_AsLong(new_inter);
+        } else {
+            Py_DECREF(new_inter);
+            PyErr_SetString(
+                PyExc_TypeError,
+                "interval is not a valid type. Must be a timedelta object or integer");
+            return NULL;
+        }
+        Py_DECREF(new_inter);
     }
-
     new_val.it_interval.tv_sec = msec / 1000;
     new_val.it_interval.tv_nsec = (msec % 1000) * 1000000;
 
