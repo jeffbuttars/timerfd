@@ -21,7 +21,10 @@ static TimerfdObject *newTimerfdObject(PyObject *arg)
         return NULL;
     }
 
-    self->x_attr = NULL;
+    self->x_attr = PyDict_New();
+    if (self->x_attr == NULL)
+        return NULL;
+
     return self;
 }//newTimerfdObject()
 
@@ -128,9 +131,6 @@ static PyTypeObject Timerfd_Type = {
 };
 
 
-       /* int timerfd_settime(int fd, int flags, */
-       /*                     const struct itimerspec *new_value, */
-       /*                     struct itimerspec *old_value); */
 
        /* int timerfd_gettime(int fd, struct itimerspec *curr_value); */
 
@@ -149,12 +149,41 @@ static PyObject * m_timerfd_create(PyObject *self, PyObject *args, PyObject *kwa
 
     t_res = timerfd_create(clockid, flags);
     if (t_res < 1) {
-        PyErr_SetString(ErrorObject, "timerfd_create system call faild.");
-        return NULL;
+        return PyErr_SetFromErrno(NULL);
+        /* PyErr_SetString(ErrorObject, "timerfd_create system call faild."); */
+        /* return NULL; */
     }
 
     return PyLong_FromLong(t_res);
 }//m_timerfd_create()
+
+       /* int timerfd_settime(int fd, int flags, */
+       /*                     const struct itimerspec *new_value, */
+       /*                     struct itimerspec *old_value); */
+static PyObject * m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    char *kw[] = {"flags", NULL};
+    long fd = 0, flags = 0;
+    long new_val = 0, old_val = 0;
+    int t_res;
+    /* if (!PyArg_ParseTupleAndKeywords(args, kwargs, "l|lll", kw, &clockid, &flags)) */
+    /*     return NULL; */
+    if (!PyArg_ParseTuple(args, "l|lll", &fd, &flags, &new_val, &old_val))
+        return NULL;
+
+    if (clockid == 0) {
+        clockid = CLOCK_MONOTONIC;
+    }
+
+    t_res = timerfd_settime(clockid, flags, new_val, old_val);
+    if (t_res < 1) {
+        return PyErr_SetFromErrno(NULL);
+        /* PyErr_SetString(ErrorObject, "timerfd_create system call faild."); */
+        /* return NULL; */
+    }
+
+    return PyLong_FromLong(t_res);
+}//m_timerfd_settime()
 
 static PyObject *
 timerfd_new(PyObject *self, PyObject *args)
@@ -319,6 +348,12 @@ PyInit_timerfd(void)
     }
     Py_INCREF(ErrorObject);
     PyModule_AddObject(m, "error", ErrorObject);
+
+
+    PyModule_AddObject(m, "CLOCK_MONOTONIC", PyLong_FromLong((long)CLOCK_MONOTONIC));
+    PyModule_AddObject(m, "CLOCK_REALTIME", PyLong_FromLong((long)CLOCK_REALTIME));
+    PyModule_AddObject(m, "TFD_NONBLOCK", PyLong_FromLong((long)TFD_NONBLOCK));
+    PyModule_AddObject(m, "TFD_CLOEXEC", PyLong_FromLong((long)TFD_CLOEXEC));
 
     /* Add Str */
     if (PyType_Ready(&Str_Type) < 0)
