@@ -1,9 +1,17 @@
-from distutils.core import setup, Extension
+#!/usr/bin/env python
+# encoding: utf-8
 
-module1 = Extension('timerfd', sources=['timerfd/timerfd.c'])
+# from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension
+
 
 setup(
     version="0.1",
     description="FD timer for python",
-    ext_modules=[module1]
+    url='https://github.com/jeffbuttars/timerfd',
+    # long_description=(open('README.md').read()),
+    author="Jeff Buttars",
+    author_email="jeff@jeffbuttars.com",
+    license='MIT',
+    ext_modules=[Extension('timerfd', sources=['timerfd/timerfd.c'])],
 )

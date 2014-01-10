@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <datetime.h>
 #include <sys/timerfd.h>
 
 
@@ -41,9 +42,7 @@ static PyObject *Timerfd_demo(TimerfdObject *self, PyObject *args)
         return NULL;
     }
 
-    Py_INCREF(Py_None);
-
-    return Py_None;
+    Py_RETURN_NONE;
 }//*Timerfd_demo()
 
 static PyMethodDef Timerfd_methods[] = {
@@ -157,33 +156,102 @@ static PyObject * m_timerfd_create(PyObject *self, PyObject *args, PyObject *kwa
     return PyLong_FromLong(t_res);
 }//m_timerfd_create()
 
-       /* int timerfd_settime(int fd, int flags, */
-       /*                     const struct itimerspec *new_value, */
-       /*                     struct itimerspec *old_value); */
 static PyObject * m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-    char *kw[] = {"flags", NULL};
-    long fd = 0, flags = 0;
-    long new_val = 0, old_val = 0;
-    int t_res;
-    /* if (!PyArg_ParseTupleAndKeywords(args, kwargs, "l|lll", kw, &clockid, &flags)) */
-    /*     return NULL; */
-    if (!PyArg_ParseTuple(args, "l|lll", &fd, &flags, &new_val, &old_val))
-        return NULL;
+    char *kw[] = {"flags", "deadline", "interval", NULL};
+    long fd = 0, flags = 0, msec = 0;
+    PyObject *new_time;
+    PyObject *new_inter;
 
-    if (clockid == 0) {
-        clockid = CLOCK_MONOTONIC;
+    struct itimerspec new_val;
+    struct itimerspec old_val;
+
+    int t_res;
+
+    if (!PyArg_ParseTupleAndKeywords(
+                args, kwargs, "l|lOO", kw,
+                &fd, &flags, &new_time, &new_inter)) {
+        return NULL;
     }
 
-    t_res = timerfd_settime(clockid, flags, new_val, old_val);
+    if (PyDelta_Check(new_time)) {
+            msec = PyDateTime_DELTA_GET_MICROSECONDS(new_time);
+    } else if (PyLong_Check(new_time)) {
+            msec = PyLong_AsLong(new_time);
+    } else {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "deadline is not a valid type. Must be a timedelta object or integer");
+        return NULL;
+    }
+
+    new_val.it_value.tv_sec = msec / 1000;
+    new_val.it_value.tv_nsec = (msec % 1000) * 1000000;
+
+    if (PyDelta_Check(new_inter)) {
+            msec = PyDateTime_DELTA_GET_MICROSECONDS(new_inter);
+    } else if (PyLong_Check(new_inter)) {
+            msec = PyLong_AsLong(new_inter);
+    } else {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "interval is not a valid type. Must be a timedelta object or integer");
+        return NULL;
+    }
+
+    new_val.it_interval.tv_sec = msec / 1000;
+    new_val.it_interval.tv_nsec = (msec % 1000) * 1000000;
+
+    t_res = timerfd_settime(fd, flags, &new_val, &old_val);
     if (t_res < 1) {
         return PyErr_SetFromErrno(NULL);
-        /* PyErr_SetString(ErrorObject, "timerfd_create system call faild."); */
-        /* return NULL; */
     }
 
     return PyLong_FromLong(t_res);
 }//m_timerfd_settime()
+
+
+static PyObject * m_timerfd_gettime(PyObject *self, PyObject *args)
+{
+    long fd = 0;
+    int t_res;
+    struct itimerspec g_time;
+    PyObject* resp;
+    PyObject* it_val;
+    PyObject* it_inter;
+
+    if (!PyArg_ParseTuple(args, "l", &fd)) {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "fd is not a valid type or the argument is missing");
+        return NULL;
+    }
+
+    t_res = timerfd_gettime(fd, &g_time);
+    if (t_res < 1) {
+        return PyErr_SetFromErrno(NULL);
+    }
+
+    resp = PyTuple_New(2);
+
+    if (g_time.it_value.tv_sec > 0 || g_time.it_value.tv_nsec > 0) {
+        it_val = PyDelta_FromDSU(0, g_time.it_value.tv_sec, g_time.it_value.tv_nsec);
+        PyTuple_SetItem(resp, 0, it_val);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SetItem(resp, 0, Py_None);
+    }
+
+    if (g_time.it_interval.tv_sec > 0 || g_time.it_interval.tv_nsec > 0) {
+        it_inter = PyDelta_FromDSU(0, g_time.it_interval.tv_sec, g_time.it_interval.tv_nsec);
+        PyTuple_SetItem(resp, 0, it_inter);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SetItem(resp, 1, Py_None);
+    }
+
+    return resp;
+}//m_timerfd_gettime()
 
 static PyObject *
 timerfd_new(PyObject *self, PyObject *args)
@@ -298,7 +366,18 @@ static PyTypeObject Null_Type = {
 };
 
 static PyMethodDef timerfd_methods[] = {
-    {"create", (PyCFunction)m_timerfd_create, METH_VARARGS | METH_KEYWORDS, PyDoc_STR("Add doc for create")},
+    {"create",
+        (PyCFunction)m_timerfd_create,
+        METH_VARARGS | METH_KEYWORDS,
+        PyDoc_STR("Add doc for create")},
+    {"settime",
+        (PyCFunction)m_timerfd_settime,
+        METH_VARARGS | METH_KEYWORDS,
+        PyDoc_STR("Add doc for create")},
+    {"gettime",
+        (PyCFunction)m_timerfd_gettime,
+        METH_VARARGS,
+        PyDoc_STR("Add doc for create")},
     {"new", timerfd_new, METH_VARARGS, PyDoc_STR("new() -> new Timerfd object")},
     {NULL, NULL}           /* sentinel */
 };
