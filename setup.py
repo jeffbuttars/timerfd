@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# from setuptools import setup, Extension, find_packages
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 
 
 setup(
@@ -13,5 +12,6 @@ setup(
     author="Jeff Buttars",
     author_email="jeff@jeffbuttars.com",
     license='MIT',
-    ext_modules=[Extension('timerfd', sources=['timerfd/timerfd.c'])],
+    packages=find_packages(),
+    ext_modules=[Extension('timerfd.util', sources=['timerfd/util/util.c'])],
 )
