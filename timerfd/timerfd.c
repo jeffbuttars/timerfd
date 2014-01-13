@@ -183,8 +183,6 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
     }
     printf("fd %ld, flags %ld deadline %p interval %p\n", fd, flags, deadline, interval);
 
-    new_val.it_value.tv_sec = 0;
-    new_val.it_value.tv_nsec = 0;
     if (deadline != NULL) {
         printf("deadline is set\n");
         Py_INCREF(deadline);
@@ -211,8 +209,6 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
     }
 
     msec = 0;
-    new_val.it_interval.tv_sec = 0;
-    new_val.it_interval.tv_nsec = 0;
     if (interval != NULL) {
         printf("interval is set\n");
         Py_INCREF(interval);
@@ -293,7 +289,7 @@ static PyObject * m_timerfd_gettime(PyObject *self, PyObject *args)
     }
 
     t_res = timerfd_gettime(fd, &g_time);
-    if (t_res < 1) {
+    if (t_res == -1) {
         return PyErr_SetFromErrno(NULL);
     }
 
