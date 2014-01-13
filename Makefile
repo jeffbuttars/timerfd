@@ -14,3 +14,7 @@ clean:
 .PHONY: register
 register:
 	python ./setup.py register
+
+.PHONY: install
+install:
+	python ./setup.py install

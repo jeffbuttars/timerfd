@@ -153,73 +153,126 @@ static PyObject * m_timerfd_create(PyObject *self, PyObject *args, PyObject *kwa
         /* return NULL; */
     }
 
-    return PyLong_FromLong(t_res);
+    return (PyObject *)PyLong_FromLong(t_res);
 }//m_timerfd_create()
 
-static PyObject * m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwargs)
+static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-    char *kw[] = {"flags", "deadline", "interval", NULL};
-    long fd = 0, flags = 0, msec = 0;
-    PyObject *new_time;
-    PyObject *new_inter;
+    printf("m_timerfd_settime\n");
+
+    char *kw[] = {"fd", "deadline", "interval", "flags", NULL};
+    long fd = 0;
+    long  flags = 0;
+    long msec = 0;
+    int t_res;
+    PyObject *deadline = NULL;
+    PyObject *interval = NULL;
+    PyObject *it_val = NULL;
+    PyObject *it_inter = NULL;
 
     struct itimerspec new_val;
     struct itimerspec old_val;
+    memset(&new_val, 0, sizeof(struct itimerspec));
+    memset(&old_val, 0, sizeof(struct itimerspec));
 
-    int t_res;
 
     if (!PyArg_ParseTupleAndKeywords(
-                args, kwargs, "l|lOO", kw,
-                &fd, &flags, &new_time, &new_inter)) {
+                args, kwargs, "l|OOl:timerfd_settime", kw,
+                &fd, &deadline, &interval, &flags)) {
         return NULL;
     }
+    printf("fd %ld, flags %ld deadline %p interval %p\n", fd, flags, deadline, interval);
 
     new_val.it_value.tv_sec = 0;
     new_val.it_value.tv_nsec = 0;
-    if (new_time != NULL) {
-        Py_INCREF(new_time);
-        if (PyDelta_Check(new_time)) {
-                msec = PyDateTime_DELTA_GET_MICROSECONDS(new_time);
-        } else if (PyLong_Check(new_time)) {
-                msec = PyLong_AsLong(new_time);
+    if (deadline != NULL) {
+        printf("deadline is set\n");
+        Py_INCREF(deadline);
+        if (PyDelta_Check(deadline)) {
+                printf("deadline is Delta\n");
+                msec = PyDateTime_DELTA_GET_MICROSECONDS(deadline);
+        } else if (PyLong_Check(deadline)) {
+                printf("deadline is long\n");
+                msec = PyLong_AsLong(deadline);
         } else {
-            Py_DECREF(new_time);
+            printf("deadline is UK\n");
+            Py_DECREF(deadline);
             PyErr_SetString(
                 PyExc_TypeError,
                 "deadline is not a valid type. Must be a timedelta object or integer");
             return NULL;
         }
-        Py_DECREF(new_time);
+        Py_DECREF(deadline);
     }
-    new_val.it_value.tv_sec = msec / 1000;
-    new_val.it_value.tv_nsec = (msec % 1000) * 1000000;
+    printf("deadline is %ld\n", msec);
+    if (msec > 0) {
+        new_val.it_value.tv_sec = msec / 1000;
+        new_val.it_value.tv_nsec = (msec % 1000) * 1000000;
+    }
 
+    msec = 0;
     new_val.it_interval.tv_sec = 0;
     new_val.it_interval.tv_nsec = 0;
-    if (new_inter != NULL) {
-        Py_INCREF(new_inter);
-        if (PyDelta_Check(new_inter)) {
-                msec = PyDateTime_DELTA_GET_MICROSECONDS(new_inter);
-        } else if (PyLong_Check(new_inter)) {
-                msec = PyLong_AsLong(new_inter);
+    if (interval != NULL) {
+        printf("interval is set\n");
+        Py_INCREF(interval);
+        if (PyDelta_Check(interval)) {
+                printf("interval is Delta\n");
+                msec = PyDateTime_DELTA_GET_MICROSECONDS(interval);
+        } else if (PyLong_Check(interval)) {
+                printf("interval is long\n");
+                msec = PyLong_AsLong(interval);
         } else {
-            Py_DECREF(new_inter);
+            Py_DECREF(interval);
             PyErr_SetString(
                 PyExc_TypeError,
                 "interval is not a valid type. Must be a timedelta object or integer");
             return NULL;
         }
-        Py_DECREF(new_inter);
+        Py_DECREF(interval);
     }
-    new_val.it_interval.tv_sec = msec / 1000;
-    new_val.it_interval.tv_nsec = (msec % 1000) * 1000000;
+    printf("interval is %ld\n", msec);
+    if (msec > 0) {
+        new_val.it_interval.tv_sec = msec / 1000;
+        new_val.it_interval.tv_nsec = (msec % 1000) * 1000000;
+    }
 
+    printf("settime fd %ld, flags %ld new_val %p old_val %p\n", fd, flags, &new_val, &old_val);
     t_res = timerfd_settime(fd, flags, &new_val, &old_val);
-    if (t_res < 1) {
+    printf("timerfd_settime response %d\n", t_res);
+
+    if (t_res != 0) {
+        printf("error out\n");
         return PyErr_SetFromErrno(NULL);
     }
 
-    return PyLong_FromLong(t_res);
+    printf("create tuple\n");
+    PyObject *resp = PyTuple_New(2);
+    if (resp == NULL) {
+        printf("bad tuple\n");
+        return NULL;
+    }
+
+    printf("get val delta\n");
+    if (old_val.it_value.tv_sec > 0 || old_val.it_value.tv_nsec > 0) {
+        it_val = PyDelta_FromDSU(0, old_val.it_value.tv_sec, old_val.it_value.tv_nsec);
+        PyTuple_SetItem(resp, 0, it_val);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SetItem(resp, 0, Py_None);
+    }
+
+    printf("get interval delta\n");
+    if (old_val.it_interval.tv_sec > 0 || old_val.it_interval.tv_nsec > 0) {
+        it_inter = PyDelta_FromDSU(0, old_val.it_interval.tv_sec, old_val.it_interval.tv_nsec);
+        PyTuple_SetItem(resp, 0, it_inter);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SetItem(resp, 1, Py_None);
+    }
+
+    printf("return %p\n", resp);
+    return (PyObject *)resp;
 }//m_timerfd_settime()
 
 
@@ -256,7 +309,7 @@ static PyObject * m_timerfd_gettime(PyObject *self, PyObject *args)
 
     if (g_time.it_interval.tv_sec > 0 || g_time.it_interval.tv_nsec > 0) {
         it_inter = PyDelta_FromDSU(0, g_time.it_interval.tv_sec, g_time.it_interval.tv_nsec);
-        PyTuple_SetItem(resp, 0, it_inter);
+        PyTuple_SetItem(resp, 1, it_inter);
     } else {
         Py_INCREF(Py_None);
         PyTuple_SetItem(resp, 1, Py_None);
@@ -397,7 +450,7 @@ static PyMethodDef timerfd_methods[] = {
 PyDoc_STRVAR(module_doc,
 "This is a template module just for instruction.");
 
-static struct PyModuleDef timerfdmodule = {
+static PyModuleDef timerfdmodule = {
     PyModuleDef_HEAD_INIT,
     "timerfd",
     module_doc,
@@ -413,6 +466,7 @@ PyMODINIT_FUNC
 PyInit_timerfd(void)
 {
     PyObject *m = NULL;
+    PyDateTime_IMPORT;
 
     /* Due to cross platform compiler issues the slots must be filled
      * here. It's required for portability to Windows without requiring
