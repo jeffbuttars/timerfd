@@ -6,7 +6,7 @@ import os
 import datetime
 import unittest
 
-import timerfd
+from timerfd import Timerfd
 import timerfd.util
 
 
@@ -23,7 +23,7 @@ class TestTimerfdUtil(unittest.TestCase):
         :return:
         :rtype:
         """
-    
+
         if self.tid:
             os.close(self.tid)
     #tearDown()
@@ -124,100 +124,99 @@ class TestTimerfdUtil(unittest.TestCase):
     ### test_settime ##############################
     ###############################################
 
+    def _settime(self, dead, inter):
+        print("\n_settime: deadline: %s, interval: %s" % (dead, inter))
+        vi = timerfd.util.settime(self.tid, dead, inter)
+        print("settime result ", vi)
+
+        self.assertIsInstance(vi, tuple)
+        self.assertIsInstance(vi[0], datetime.timedelta)
+        self.assertIsInstance(vi[1], datetime.timedelta)
+
+        return vi
+
     def test_settime(self):
         """todo: Docstring for settime"""
-        deadline = 100
-        interval = 100
-        deadline_d = datetime.timedelta(milliseconds=deadline)
-        interval_d = datetime.timedelta(milliseconds=interval)
+        deadline = 999999
+        interval = 999999
+        deadline_d = datetime.timedelta(microseconds=deadline)
+        interval_d = datetime.timedelta(microseconds=interval)
 
         self.test_create()
 
-        vi = timerfd.util.settime(self.tid, 0, 0)
-        print("settime result ", vi)
+        vi = self._settime(0, 0)
+        self.assertEqual(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
 
-        self.assertIsInstance(vi, tuple)
-        self.assertIsNone(vi[0])
-        self.assertIsNone(vi[1])
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
+        vi = self._settime(deadline, 0)
+        self.assertEqual(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
 
-        vi = timerfd.util.settime(self.tid, deadline, 0)
-        print("settime result ", vi)
-        self.assertIsInstance(vi, tuple)
-        self.assertIsNone(vi[0])
-        self.assertIsNone(vi[1])
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
+        vi = self._settime(deadline, interval)
+        self.assertGreater(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
 
-        vi = timerfd.util.settime(self.tid, deadline, interval)
-        print("settime result ", vi)
-        self.assertIsInstance(vi, tuple)
-        self.assertIsInstance(vi[0], datetime.timedelta)
-        self.assertIsNone(vi[1])
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
+        vi = self._settime(0, 0)
+        self.assertGreater(vi[0].microseconds, 0)
+        self.assertGreater(vi[1].microseconds, 0)
 
-        vi = timerfd.util.settime(self.tid, 0, 0)
-        print("settime result ", vi)
-        self.assertIsInstance(vi, tuple)
-        self.assertIsInstance(vi[0], datetime.timedelta)
-        self.assertIsInstance(vi[1], datetime.timedelta)
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
+        vi = self._settime(0, 0)
+        self.assertEqual(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
 
-        vi = timerfd.util.settime(self.tid, 0, 0)
-        print("settime result ", vi)
-        self.assertIsInstance(vi, tuple)
-        self.assertIsNone(vi[0])
-        self.assertIsNone(vi[1])
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
+        vi = self._settime(deadline_d, 0)
+        self.assertEqual(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
 
-        vi = timerfd.util.settime(self.tid, deadline_d, 0)
-        print("settime result ", vi)
-        self.assertIsInstance(vi, tuple)
-        self.assertIsNone(vi[0])
-        self.assertIsNone(vi[1])
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
+        vi = self._settime(deadline_d, interval_d)
+        # print("settime result ", vi)
+        self.assertGreater(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
 
-        vi = timerfd.util.settime(self.tid, deadline_d, interval_d)
-        print("settime result ", vi)
-        self.assertIsInstance(vi, tuple)
-        self.assertIsInstance(vi[0], datetime.timedelta)
-        self.assertIsNone(vi[1])
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
+        vi = self._settime(0, 0)
+        self.assertGreater(vi[0].microseconds, 0)
+        self.assertGreater(vi[1].microseconds, 0)
 
-        vi = timerfd.util.settime(self.tid, 0, 0)
-        print("settime result ", vi)
-        self.assertIsInstance(vi, tuple)
-        self.assertIsInstance(vi[0], datetime.timedelta)
-        self.assertIsInstance(vi[1], datetime.timedelta)
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
-
-        vi = timerfd.util.settime(self.tid, 0, 0)
-        print("settime result ", vi)
-        self.assertIsInstance(vi, tuple)
-        self.assertIsNone(vi[0])
-        self.assertIsNone(vi[1])
-        print("\nValue is ", vi[0])
-        print("Interval is ", vi[1])
+        vi = self._settime(0, 0)
+        self.assertEqual(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
     #test_settime()
 
     def test_gettime(self):
         """todo: Docstring for gettime"""
         deadline = 100
         interval = 100
-        deadline_d = datetime.timedelta(milliseconds=deadline)
-        interval_d = datetime.timedelta(milliseconds=interval)
+        deadline_d = datetime.timedelta(microseconds=deadline)
+        interval_d = datetime.timedelta(microseconds=interval)
 
         self.test_create()
 
     #test_gettime()
 #TestTimerfdUtil
+
+
+class TestTimerfdObj(unittest.TestCase):
+    """Docstring for TimerfdObj """
+
+    def setUp(self):
+        """todo: to be defined"""
+        self.tfd = None
+    #setUp()
+
+    def test_class_props(self):
+        """todo: Docstring for class_props"""
+        # print(dir(Timerfd))
+        self.assertEqual(timerfd.util.CLOCK_REALTIME, Timerfd.CLOCK_REALTIME)
+        self.assertEqual(timerfd.util.CLOCK_MONOTONIC, Timerfd.CLOCK_MONOTONIC)
+        self.assertEqual(timerfd.util.TFD_NONBLOCK, Timerfd.TFD_NONBLOCK)
+        self.assertEqual(timerfd.util.TFD_CLOEXEC, Timerfd.TFD_CLOEXEC)
+    #test_class_props()
+
+    def test_init(self):
+        self.tfd = Timerfd()
+    #test_init()
+
+#TestTimerfdObj
 
 
 def main():
