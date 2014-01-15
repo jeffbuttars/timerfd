@@ -1,6 +1,2 @@
-class Timerfd(object):
-    """Docstring for Timerfd """
-    def __init__(self):
-        print("Timerfd init")
-    #__init__()
-#Timerfd
+import timerfd.timerfdobj
+Timerfd = timerfd.timerfdobj.Timerfd
