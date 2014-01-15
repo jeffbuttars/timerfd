@@ -19,3 +19,7 @@ register:
 .PHONY: install
 install:
 	python ./setup.py install
+
+.PHONY: test
+test:
+	cd test; ./test.py
