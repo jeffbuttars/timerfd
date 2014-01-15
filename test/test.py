@@ -191,6 +191,40 @@ class TestTimerfdUtil(unittest.TestCase):
 
         self.test_create()
 
+        self._settime(0, 0)
+        vi = timerfd.util.gettime(self.tid)
+        self.assertEqual(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
+
+        self._settime(deadline, 0)
+        vi = timerfd.util.gettime(self.tid)
+        self.assertGreater(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
+
+        self._settime(deadline, interval)
+        vi = timerfd.util.gettime(self.tid)
+        self.assertGreater(vi[0].microseconds, 0)
+        self.assertGreater(vi[1].microseconds, 0)
+
+        self._settime(0, 0)
+        vi = timerfd.util.gettime(self.tid)
+        self.assertEqual(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
+
+        self._settime(deadline_d, 0)
+        vi = timerfd.util.gettime(self.tid)
+        self.assertGreater(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
+
+        self._settime(deadline_d, interval_d)
+        vi = timerfd.util.gettime(self.tid)
+        self.assertGreater(vi[0].microseconds, 0)
+        self.assertGreater(vi[1].microseconds, 0)
+
+        self._settime(0, 0)
+        vi = timerfd.util.gettime(self.tid)
+        self.assertEqual(vi[0].microseconds, 0)
+        self.assertEqual(vi[1].microseconds, 0)
     #test_gettime()
 #TestTimerfdUtil
 
