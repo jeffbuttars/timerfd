@@ -294,20 +294,15 @@ static PyObject * m_timerfd_gettime(PyObject *self, PyObject *args)
     }
 
     resp = PyTuple_New(2);
-
-    if (g_time.it_value.tv_sec > 0 || g_time.it_value.tv_nsec > 0) {
-        it_val = PyDelta_FromDSU(0, g_time.it_value.tv_sec, g_time.it_value.tv_nsec);
-        PyTuple_SetItem(resp, 0, it_val);
-    } else {
-        PyTuple_SetItem(resp, 0, Py_None);
+    if (resp == NULL) {
+        /* printf("bad tuple\n"); */
+        return NULL;
     }
 
-    if (g_time.it_interval.tv_sec > 0 || g_time.it_interval.tv_nsec > 0) {
-        it_inter = PyDelta_FromDSU(0, g_time.it_interval.tv_sec, g_time.it_interval.tv_nsec);
-        PyTuple_SetItem(resp, 1, it_inter);
-    } else {
-        PyTuple_SetItem(resp, 1, Py_None);
-    }
+    PyTuple_SetItem(resp, 0,
+            PyDelta_FromDSU(0, g_time.it_value.tv_sec, g_time.it_value.tv_nsec));
+    PyTuple_SetItem(resp, 1,
+            PyDelta_FromDSU(0, g_time.it_interval.tv_sec, g_time.it_interval.tv_nsec));
 
     return resp;
 }//m_timerfd_gettime()
