@@ -237,6 +237,10 @@ class TestTimerfdObj(unittest.TestCase):
         self.tfd = None
     #setUp()
 
+    def test_init(self):
+        self.tfd = Timerfd()
+    #test_init()
+
     def test_class_props(self):
         """todo: Docstring for class_props"""
         # print(dir(Timerfd))
@@ -245,12 +249,29 @@ class TestTimerfdObj(unittest.TestCase):
         self.assertEqual(timerfd.util.TFD_NONBLOCK, Timerfd.TFD_NONBLOCK)
         self.assertEqual(timerfd.util.TFD_CLOEXEC, Timerfd.TFD_CLOEXEC)
     #test_class_props()
-
-    def test_init(self):
-        self.tfd = Timerfd()
-    #test_init()
-
 #TestTimerfdObj
+
+
+class TestTimerfdObjRestart(unittest.TestCase):
+    """Docstring for TimerfdObjRestart """
+
+    def setUp(self):
+        """todo: to be defined"""
+        pass
+    #setUp()
+
+#TestTimerfdObjRestart
+
+
+class TestTimerfdObjExpired(unittest.TestCase):
+    """Docstring for TimerfdObjExpired """
+
+    def setUp(self):
+        """todo: to be defined"""
+        pass
+    #setUp()
+
+#TestTimerfdObjExpired
 
 
 def main():
