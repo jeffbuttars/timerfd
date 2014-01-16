@@ -53,7 +53,7 @@ class Timerfd(object):
         else:
             self._clockid = (self._realtime and Timerfd.CLOCK_REALTIME) or Timerfd.CLOCK_MONOTONIC
 
-        self._callbacks = cb
+        self._callbacks = cb or []
         self._fd = lib.create(self._clockid, self._cflags)
     #__init__()
 
@@ -156,6 +156,7 @@ class Timerfd(object):
         return self.start(deadline=delta, interval=inter)
     #restart()
 
+    @property
     def expired(self):
         """
         By default, if the timer has not expired at least once, this will
@@ -179,7 +180,7 @@ class Timerfd(object):
         if exp > 0:
             cb_res += [x() for x in self._callbacks]
 
-        return (cb_res, exp)
+        return (exp, cb_res)
     #expired()
 
     def delta(self):

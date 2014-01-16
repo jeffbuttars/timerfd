@@ -305,88 +305,11 @@ class TestTimerfdLibTime(unittest.TestCase):
         :return:
         :rtype:
         """
-
-        max_interval = 5
-        interval_c = 0
-
         self.timer_sub_test(self.deadline, *args, **kwargs)
         self.timer_sub_test(self.deadline, self.interval, *args, **kwargs)
 
-        # print("\ntimer_test(args: %s, kwargs: %s)" % (args, kwargs))
-        # self.test_create(*args, **kwargs)
-
-        # print("\ntest_default_timer settime ", self.deadline)
-        # now = datetime.datetime.now()
-        # timerfd.lib.settime(self.tid, self.deadline)
-
-        # print("test_default_timer reading ", self.tid)
-        # expires = timerfd.lib.expired(self.tid)
-        # while expires == 0:
-        #     expires = timerfd.lib.expired(self.tid)
-
-        # delta = datetime.datetime.now() - now
-        # print("test_default_timer read ", expires, " delta ", delta)
-
-        # # This is tricky, but the seconds of the delta 'should' be the same
-        # # as deadline seconds.
-        # self.assertEqual(self.d_deadline.seconds, delta.seconds)
-
         self.timer_sub_test(self.d_deadline, *args, **kwargs)
         self.timer_sub_test(self.d_deadline, self.d_interval, *args, **kwargs)
-        # # Do it again, using the timedelta object
-        # print("test_default_timer settime ", self.d_deadline, " ", self.d_deadline.microseconds)
-        # now = datetime.datetime.now()
-        # timerfd.lib.settime(self.tid, self.d_deadline)
-
-        # print("test_default_timer reading ", self.tid)
-        # expires = timerfd.lib.expired(self.tid)
-        # while expires == 0:
-        #     expires = timerfd.lib.expired(self.tid)
-
-        # delta = datetime.datetime.now() - now
-        # print("test_default_timer read ", expires, " delta ", delta)
-
-        # This is tricky, but the seconds of the delta 'should' be the same
-        # as deadline seconds.
-        # self.assertEqual(self.d_deadline.seconds, delta.seconds)
-
-        #########################################################
-        #########Test with an interval ##########################
-        #########################################################
-        # print("\ntest_default_timer settime ", self.deadline, self.interval)
-        # now = datetime.datetime.now()
-        # timerfd.lib.settime(self.tid, self.deadline, self.interval)
-
-        # print("test_default_timer reading ", self.tid)
-        # expires = timerfd.lib.expired(self.tid)
-        # while expires == 0:
-        #     expires = timerfd.lib.expired(self.tid)
-
-        # delta = datetime.datetime.now() - now
-        # print("test_default_timer read ", expires, " delta ", delta)
-
-        # # This is tricky, but the seconds of the delta 'should' be the same
-        # # as deadline seconds.
-        # self.assertEqual(self.d_deadline.seconds, delta.seconds)
-
-        # # Do it again, using the timedelta object
-        # print("test_default_timer settime ",
-        #       self.d_deadline, " ", self.d_deadline.microseconds,
-        #       self.d_interval, " ", self.d_interval.microseconds)
-        # now = datetime.datetime.now()
-        # timerfd.lib.settime(self.tid, self.d_deadline, self.d_interval)
-
-        # print("test_default_timer reading ", self.tid)
-        # expires = timerfd.lib.expired(self.tid)
-        # while expires == 0:
-        #     expires = timerfd.lib.expired(self.tid)
-
-        # delta = datetime.datetime.now() - now
-        # print("test_default_timer read ", expires, " delta ", delta)
-
-        # # This is tricky, but the seconds of the delta 'should' be the same
-        # # as deadline seconds.
-        # self.assertEqual(self.d_deadline.seconds, delta.seconds)
     #timer_test()
 
     def test_default_timer(self):
@@ -431,7 +354,178 @@ class TestTimerfdObj(unittest.TestCase):
         self.assertEqual(timerfd.lib.TFD_NONBLOCK, Timerfd.TFD_NONBLOCK)
         self.assertEqual(timerfd.lib.TFD_CLOEXEC, Timerfd.TFD_CLOEXEC)
     #test_class_props()
+
+    def test_create_realtime(self):
+        """todo: Docstring for create_realtime"""
+        self.tfd = Timerfd(realtime=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_realtime()
+
+    def test_create_monotonic(self):
+        """todo: Docstring for test_create_monotonic
+        :return:
+        :rtype:
+        """
+        self.tfd = Timerfd(monotonic=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_monotonic()
+
+    def test_create_nonblock(self):
+        """todo: Docstring for create_nonblock"""
+        self.tfd = Timerfd(async=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_nonblock()
+
+    def test_create_close_exec(self):
+        """todo: Docstring for create_close_exec"""
+        self.tfd = Timerfd(cloexec=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_close_exec()
+
+    def test_nonblock_cloexec(self):
+        """todo: Docstring for nonblock_cloexec"""
+        self.tfd = Timerfd(async=True, cloexec=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_nonblock_cloexec()
+
+    def test_create_realtime_nonblock(self):
+        """todo: Docstring for create_realtime"""
+        self.tfd = Timerfd(async=True, realtime=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_realtime_nonblock()
+
+    def test_create_realtime_cloexec(self):
+        """todo: Docstring for create_realtime"""
+        self.tfd = Timerfd(cloexec=True, realtime=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_realtime_cloexec()
+
+    def test_create_realtime_nonblock_cloexec(self):
+        """todo: Docstring for create_realtime"""
+        self.tfd = Timerfd(async=True, cloexec=True, realtime=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_realtime_nonblock_cloexec()
+
+    def test_create_monotonic_nonblock(self):
+        """todo: Docstring for create_monotonic"""
+        self.tfd = Timerfd(async=True, monotonic=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_monotonic_nonblock()
+
+    def test_create_monotonic_cloexec(self):
+        """todo: Docstring for create_monotonic"""
+        self.tfd = Timerfd(cloexec=True, monotonic=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_monotonic_cloexec()
+
+    def test_create_monotonic_nonblock_cloexec(self):
+        """todo: Docstring for create_monotonic"""
+        self.tfd = Timerfd(async=True, cloexec=True, monotonic=True)
+        self.assertIsInstance(self.tfd, Timerfd)
+    #test_create_monotonic_nonblock_cloexec()
 #TestTimerfdObj
+
+
+class TestTimerfdObjTime(unittest.TestCase):
+    """Docstring for TimerfdObjTime """
+
+    def setUp(self):
+        """todo: to be defined"""
+
+        self.deadline = 1000000
+        self.interval = 1000000
+        self.d_deadline = datetime.timedelta(microseconds=self.deadline)
+        self.d_interval = datetime.timedelta(microseconds=self.interval)
+        self.max_intervals = 5
+        self.tfd = None
+        pass
+    #setUp()
+
+    def timer_sub_test(self, deadline=None, interval=0, **kwargs):
+        """todo: Docstring for timer_sub_test
+        :return:
+        :rtype:
+        """
+
+        deadline = deadline or self.d_deadline
+
+        self.tfd = Timerfd(deadline=deadline, interval=interval, **kwargs)
+        self.assertIsInstance(self.tfd, Timerfd)
+
+        print("\ntimer_sub_test settime ", deadline, interval)
+        now = datetime.datetime.now()
+        self.tfd.start()
+
+        print("timer_sub_test reading ", self.tfd.fd)
+        expires, cbr = self.tfd.expired
+        self.assertIsInstance(expires, int)
+        self.assertIsInstance(cbr, list)
+
+        while expires == 0:
+            expires, cbr = self.tfd.expired
+
+        delta = datetime.datetime.now() - now
+        # Throw in a little compensation for interval testing below.
+        now = datetime.datetime.now() - datetime.timedelta(microseconds=100000)
+        print("timer_sub_test read ", expires, " delta ", delta)
+
+        # This is tricky, but the seconds of the delta 'should' be the same
+        # as deadline seconds.
+        self.assertEqual(self.d_deadline.seconds, delta.seconds)
+
+        c_interval = 0
+        if interval:
+            print("Testing interval", interval)
+            print("\ntimer_sub_test settime with interval ", deadline, interval)
+            while c_interval < self.max_intervals:
+                print("current interval", c_interval)
+                print("timer_sub_test reading ", self.tfd.fd)
+                expires, cbr = self.tfd.expired
+                while expires == 0:
+                    expires, cbr = self.tfd.expired
+                c_interval += expires
+
+                delta = datetime.datetime.now() - now
+                print("timer_sub_test read interval ", expires, " delta ", delta)
+                # Throw in a little compensation for interval testing below.
+                now = datetime.datetime.now() - datetime.timedelta(microseconds=100000)
+
+                # This is tricky, but the seconds of the delta 'should' be the same
+                # as deadline seconds.
+                self.assertEqual(self.d_interval.seconds, delta.seconds)
+
+        self.tfd.stop()
+    #timer_sub_test()
+
+    def timer_test(self, *args, **kwargs):
+        """A generic timer test.
+
+        :param *args: arg description
+        :type *args: type description
+        :param **kwargs: arg description
+        :type **kwargs: type description
+        :return:
+        :rtype:
+        """
+        self.timer_sub_test(self.deadline, *args, **kwargs)
+        self.timer_sub_test(self.deadline, self.interval, *args, **kwargs)
+
+        self.timer_sub_test(self.d_deadline, *args, **kwargs)
+        self.timer_sub_test(self.d_deadline, self.d_interval, *args, **kwargs)
+    #timer_test()
+
+    def test_default_timer(self):
+        """todo: Basic tests for a blocking timer."""
+        self.timer_test(monotonic=True)
+        self.timer_test(realtime=True)
+    #test_default_timer()
+
+    def test_async_timer(self):
+        """todo: Basic tests for a non-blocking timer."""
+        self.timer_test(monotonic=True, async=True)
+        self.timer_test(realtime=True, async=True)
+    #test_async_timer()
+#TestTimerfdObjTime
 
 
 class TestTimerfdObjRestart(unittest.TestCase):
@@ -443,17 +537,6 @@ class TestTimerfdObjRestart(unittest.TestCase):
     #setUp()
 
 #TestTimerfdObjRestart
-
-
-class TestTimerfdObjExpired(unittest.TestCase):
-    """Docstring for TimerfdObjExpired """
-
-    def setUp(self):
-        """todo: to be defined"""
-        pass
-    #setUp()
-
-#TestTimerfdObjExpired
 
 
 def main():
