@@ -28,6 +28,8 @@ static void * pydelta_to_timespec(PyObject *td, struct timespec *ts)
     ts->tv_sec = PyDateTime_DELTA_GET_SECONDS(td);
     ts->tv_sec += PyDateTime_DELTA_GET_DAYS(td) * 24 * 60 * 60;
 
+    printf("pydelta_to_timespec sec: %ld, nsec: %ld\n", ts->tv_sec, ts->tv_nsec);
+
     return td;
 }//pydelta_to_timespec()
 
@@ -165,7 +167,7 @@ static PyObject * m_timerfd_create(PyObject *self, PyObject *args, PyObject *kwa
 
     t_res = timerfd_create(clockid, flags);
     if (t_res < 1) {
-        return PyErr_SetFromErrno(NULL);
+        return PyErr_SetFromErrno(PyExc_IOError);
         /* PyErr_SetString(ErrorObject, "timerfd_create system call faild."); */
         /* return NULL; */
     }
@@ -198,7 +200,7 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
                 &fd, &deadline, &interval)) {
         return NULL;
     }
-    /* printf("fd %ld, deadline %p interval %p\n", fd, deadline, interval); */
+    printf("fd %ld, deadline %p interval %p\n", fd, deadline, interval);
 
     if (deadline != NULL) {
         /* printf("deadline is set\n"); */
@@ -220,7 +222,6 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
     }
     /* printf("deadline sec %ld nsec %ld\n", new_val.it_value.tv_sec, new_val.it_value.tv_nsec); */
 
-    msec = 0;
     if (interval != NULL) {
         /* printf("interval is set\n"); */
         /* Py_INCREF(interval); */
@@ -250,7 +251,7 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
 
     if (t_res != 0) {
         /* printf("error out\n"); */
-        return PyErr_SetFromErrno(NULL);
+        return PyErr_SetFromErrno(PyExc_IOError);
     }
 
     /* printf("create tuple\n"); */
@@ -291,7 +292,7 @@ static PyObject * m_timerfd_gettime(PyObject *self, PyObject *args)
 
     t_res = timerfd_gettime(fd, &g_time);
     if (t_res == -1) {
-        return PyErr_SetFromErrno(NULL);
+        return PyErr_SetFromErrno(PyExc_IOError);
     }
 
     resp = PyTuple_New(2);
@@ -312,7 +313,6 @@ static PyObject *m_timerfd_expired(PyObject *self, PyObject *args)
 {
     long fd = 0;
     uint64_t buf = 0;
-    PyObject* resp;
 
     if (!PyArg_ParseTuple(args, "l", &fd)) {
         PyErr_SetString(
@@ -323,7 +323,7 @@ static PyObject *m_timerfd_expired(PyObject *self, PyObject *args)
 
     if (read(fd, &buf, sizeof(buf)) < 0) {
         if (errno != EAGAIN) {
-            return PyErr_SetFromErrno(NULL);
+        return PyErr_SetFromErrno(PyExc_IOError);
         }
         return PyLong_FromUnsignedLong(0);
     }
