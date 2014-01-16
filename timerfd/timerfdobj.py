@@ -174,18 +174,12 @@ class Timerfd(object):
         :return: (callback results, Number of expirations)
         :rtype: tuple
         """
+        exp = lib.expired(self._fd)
+        cb_res = []
+        if exp > 0:
+            cb_res += [x() for x in self._callbacks]
 
-        res = 0
-        try:
-            res = struct.unpack("Q", os.read(self._fd, 8))[0]
-        except IOError as e:
-            if e[0] != errno.EAGAIN:
-                raise
-            return res
-
-        cb_results = [x() for x in self._callbacks]
-
-        return (cb_results, res)
+        return (cb_res, exp)
     #expired()
 
     def delta(self):

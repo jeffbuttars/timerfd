@@ -3,8 +3,10 @@
 # edfcd9c1dda54c648ddf19005fdaad4d
 
 import os
+import struct
 import datetime
 import unittest
+import errno
 
 from timerfd import Timerfd
 import timerfd.lib
@@ -227,6 +229,87 @@ class TestTimerfdLib(unittest.TestCase):
         self.assertEqual(vi[1].microseconds, 0)
     #test_gettime()
 #TestTimerfdLib
+
+
+class TestTimerfdLibTime(unittest.TestCase):
+    """Docstring for TimerfdLibTime """
+
+    def setUp(self):
+        """todo: to be defined"""
+        self.deadline = 1000000
+        self.interval = 1000000
+        self.d_deadline = datetime.timedelta(microseconds=self.deadline)
+        self.d_interval = datetime.timedelta(microseconds=self.interval)
+    #setUp()
+
+    def timer_test(self, *args, **kwargs):
+        """A generic timer test.
+
+        :param *args: arg description
+        :type *args: type description
+        :param **kwargs: arg description
+        :type **kwargs: type description
+        :return:
+        :rtype:
+        """
+
+        print("\ntimer_test(args: %s, kwargs: %s)" % (args, kwargs))
+        self.test_create(*args, **kwargs)
+
+        print("\ntest_default_timer settime ", self.deadline)
+        now = datetime.datetime.now()
+        timerfd.lib.settime(self.tid, self.deadline)
+
+        print("test_default_timer reading ", self.tid)
+        expires = timerfd.lib.expired(self.tid)
+        while expires == 0:
+            expires = timerfd.lib.expired(self.tid)
+
+        delta = datetime.datetime.now() - now
+        print("test_default_timer read ", expires, " delta ", delta)
+
+        # This is tricky, but the seconds of the delta 'should' be the same
+        # as deadline seconds.
+        self.assertEqual(self.d_deadline.seconds, delta.seconds)
+
+        # Do it again, using the timedelta object
+        print("test_default_timer settime ", self.d_deadline, " ", self.d_deadline.microseconds)
+        now = datetime.datetime.now()
+        timerfd.lib.settime(self.tid, self.d_deadline)
+
+        print("test_default_timer reading ", self.tid)
+        expires = timerfd.lib.expired(self.tid)
+        while expires == 0:
+            expires = timerfd.lib.expired(self.tid)
+
+        delta = datetime.datetime.now() - now
+        print("test_default_timer read ", expires, " delta ", delta)
+
+        # This is tricky, but the seconds of the delta 'should' be the same
+        # as deadline seconds.
+        self.assertEqual(self.d_deadline.seconds, delta.seconds)
+    #timer_test()
+
+    def test_default_timer(self):
+        """todo: Basic tests for a blocking timer."""
+        self.timer_test(clockid=timerfd.lib.CLOCK_MONOTONIC)
+        self.timer_test(clockid=timerfd.lib.CLOCK_REALTIME)
+    #test_default_timer()
+
+    def test_async_timer(self):
+        """todo: Basic tests for a non-blocking timer."""
+        self.timer_test(
+            clockid=timerfd.lib.CLOCK_MONOTONIC, flags=timerfd.lib.TFD_NONBLOCK)
+        self.timer_test(
+            clockid=timerfd.lib.CLOCK_REALTIME, flags=timerfd.lib.TFD_NONBLOCK)
+    #test_async_timer()
+
+    def test_create(self, *args, **kwargs):
+        t = timerfd.lib.create(*args, **kwargs)
+        self.assertIsInstance(t, int)
+        self.tid = t
+    #create()
+#TestTimerfdLibTime
 
 
 class TestTimerfdObj(unittest.TestCase):

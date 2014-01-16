@@ -1,6 +1,7 @@
 #include <Python.h>
 #include <datetime.h>
 #include <sys/timerfd.h>
+#include <unistd.h>
 
 
 #define MICROSEC 1000000
@@ -15,6 +16,20 @@ typedef struct {
 static PyTypeObject TimerfdLib_Type; 
 
 #define TimerfdLibObject_Check(v)  (Py_TYPE(v) == &TimerfdLib_Type)
+
+static void * pydelta_to_timespec(PyObject *td, struct timespec *ts)
+{
+
+    if (!PyDelta_Check(td)) {
+        return NULL;
+    }
+
+    ts->tv_nsec = (PyDateTime_DELTA_GET_MICROSECONDS(td) % MICROSEC) * 1000;
+    ts->tv_sec = PyDateTime_DELTA_GET_SECONDS(td);
+    ts->tv_sec += PyDateTime_DELTA_GET_DAYS(td) * 24 * 60 * 60;
+
+    return td;
+}//pydelta_to_timespec()
 
 static TimerfdLibObject *newTimerfdLibObject(PyObject *arg)
 {
@@ -187,29 +202,23 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
 
     if (deadline != NULL) {
         /* printf("deadline is set\n"); */
-        /* Py_INCREF(deadline); */
         if (PyDelta_Check(deadline)) {
                 /* printf("deadline is Delta\n"); */
-                msec = PyDateTime_DELTA_GET_MICROSECONDS(deadline);
+                pydelta_to_timespec(deadline, &new_val.it_value);
         } else if (PyLong_Check(deadline)) {
                 /* printf("deadline is long\n"); */
                 msec = PyLong_AsLong(deadline);
+                new_val.it_value.tv_sec = msec / MICROSEC;
+                new_val.it_value.tv_nsec = (msec % MICROSEC) * 1000;
         } else {
             /* printf("deadline is UK\n"); */
-            /* Py_DECREF(deadline); */
             PyErr_SetString(
                 PyExc_TypeError,
                 "deadline is not a valid type. Must be a timedelta object or integer");
             return NULL;
         }
-        /* Py_DECREF(deadline); */
     }
-    /* printf("deadline is %ld\n", msec); */
-    if (msec > 0) {
-        new_val.it_value.tv_sec = msec / MICROSEC;
-        new_val.it_value.tv_nsec = (msec % MICROSEC) * 1000;
-        /* printf("deadline sec %ld nsec %ld\n", new_val.it_value.tv_sec, new_val.it_value.tv_nsec); */
-    }
+    /* printf("deadline sec %ld nsec %ld\n", new_val.it_value.tv_sec, new_val.it_value.tv_nsec); */
 
     msec = 0;
     if (interval != NULL) {
@@ -217,27 +226,23 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
         /* Py_INCREF(interval); */
         if (PyDelta_Check(interval)) {
                 /* printf("interval is Delta\n"); */
-                msec = PyDateTime_DELTA_GET_MICROSECONDS(interval);
+                pydelta_to_timespec(interval, &new_val.it_interval);
         } else if (PyLong_Check(interval)) {
                 /* printf("interval is long\n"); */
                 msec = PyLong_AsLong(interval);
+                new_val.it_interval.tv_sec = msec / MICROSEC;
+                new_val.it_interval.tv_nsec = (msec % MICROSEC) * 1000;
         } else {
-            /* Py_DECREF(interval); */
             PyErr_SetString(
                 PyExc_TypeError,
                 "interval is not a valid type. Must be a timedelta object or integer");
             return NULL;
         }
-        /* Py_DECREF(interval); */
     }
     /* printf("interval is %ld\n", msec); */
-    if (msec > 0) {
-        new_val.it_interval.tv_sec = msec / MICROSEC;
-        new_val.it_interval.tv_nsec = (msec % MICROSEC) * 1000;
-        /* printf("interval sec %ld nsec %ld\n", */
-                /* new_val.it_interval.tv_sec, */
-                /* new_val.it_interval.tv_nsec); */
-    }
+    /*     [> printf("interval sec %ld nsec %ld\n", <] */
+    /*             [> new_val.it_interval.tv_sec, <] */
+    /*             [> new_val.it_interval.tv_nsec); <] */
 
     /* printf("settime fd %ld,  new_val %p old_val %p\n", fd, &new_val, &old_val); */
     t_res = timerfd_settime(fd, 0, &new_val, &old_val);
@@ -302,6 +307,29 @@ static PyObject * m_timerfd_gettime(PyObject *self, PyObject *args)
 
     return resp;
 }//m_timerfd_gettime()
+
+static PyObject *m_timerfd_expired(PyObject *self, PyObject *args)
+{
+    long fd = 0;
+    uint64_t buf = 0;
+    PyObject* resp;
+
+    if (!PyArg_ParseTuple(args, "l", &fd)) {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "fd is not a valid type or the argument is missing");
+        return NULL;
+    }
+
+    if (read(fd, &buf, sizeof(buf)) < 0) {
+        if (errno != EAGAIN) {
+            return PyErr_SetFromErrno(NULL);
+        }
+        return PyLong_FromUnsignedLong(0);
+    }
+
+    return PyLong_FromUnsignedLong(buf);
+}//m_timerfd_expired()
 
 static PyObject *
 timerfd_new(PyObject *self, PyObject *args)
@@ -428,6 +456,10 @@ static PyMethodDef timerfd_methods[] = {
         (PyCFunction)m_timerfd_gettime,
         METH_VARARGS,
         PyDoc_STR("Add doc for create")},
+    {"expired",
+        (PyCFunction)m_timerfd_expired,
+        METH_VARARGS,
+        PyDoc_STR("Check, and maybe block, if a timer has expired.")},
     {"new", timerfd_new, METH_VARARGS, PyDoc_STR("new() -> new TimerfdLib object")},
     {NULL, NULL}           /* sentinel */
 };
