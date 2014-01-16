@@ -13,5 +13,5 @@ setup(
     author_email="jeff@jeffbuttars.com",
     license='MIT',
     packages=find_packages(),
-    ext_modules=[Extension('timerfd.util', sources=['timerfd/util/util.c'])],
+    ext_modules=[Extension('timerfd.lib', sources=['timerfd/lib/lib.c'])],
 )
