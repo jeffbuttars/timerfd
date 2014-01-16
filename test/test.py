@@ -7,11 +7,11 @@ import datetime
 import unittest
 
 from timerfd import Timerfd
-import timerfd.util
+import timerfd.lib
 
 
-class TestTimerfdUtil(unittest.TestCase):
-    """Docstring for TimerfdUtil """
+class TestTimerfdLib(unittest.TestCase):
+    """Docstring for TimerfdLib """
 
     def setUp(self):
         """todo: to be defined"""
@@ -33,14 +33,14 @@ class TestTimerfdUtil(unittest.TestCase):
     ###############################################
 
     def test_create(self):
-        t = timerfd.util.create()
+        t = timerfd.lib.create()
         self.assertIsInstance(t, int)
         self.tid = t
     #create()
 
     def test_create_realtime(self):
         """todo: Docstring for create_realtime"""
-        self.tid = timerfd.util.create(clockid=timerfd.util.CLOCK_REALTIME)
+        self.tid = timerfd.lib.create(clockid=timerfd.lib.CLOCK_REALTIME)
         self.assertIsInstance(self.tid, int)
     #test_create_realtime()
 
@@ -49,74 +49,74 @@ class TestTimerfdUtil(unittest.TestCase):
         :return:
         :rtype:
         """
-        self.tid = timerfd.util.create(clockid=timerfd.util.CLOCK_MONOTONIC)
+        self.tid = timerfd.lib.create(clockid=timerfd.lib.CLOCK_MONOTONIC)
         self.assertIsInstance(self.tid, int)
     #test_create_monotonic()
 
     def test_create_nonblock(self):
         """todo: Docstring for create_nonblock"""
-        self.tid = timerfd.util.create(flags=timerfd.util.TFD_NONBLOCK)
+        self.tid = timerfd.lib.create(flags=timerfd.lib.TFD_NONBLOCK)
         self.assertIsInstance(self.tid, int)
     #test_create_nonblock()
 
     def test_create_close_exec(self):
         """todo: Docstring for create_close_exec"""
-        self.tid = timerfd.util.create(flags=timerfd.util.TFD_CLOEXEC)
+        self.tid = timerfd.lib.create(flags=timerfd.lib.TFD_CLOEXEC)
         self.assertIsInstance(self.tid, int)
     #test_create_close_exec()
 
     def test_nonblock_cloexec(self):
         """todo: Docstring for nonblock_cloexec"""
-        self.tid = timerfd.util.create(
-            flags=(timerfd.util.TFD_CLOEXEC | timerfd.util.TFD_NONBLOCK))
+        self.tid = timerfd.lib.create(
+            flags=(timerfd.lib.TFD_CLOEXEC | timerfd.lib.TFD_NONBLOCK))
         self.assertIsInstance(self.tid, int)
     #test_nonblock_cloexec()
 
     def test_create_realtime_nonblock(self):
         """todo: Docstring for create_realtime"""
-        self.tid = timerfd.util.create(
-            clockid=timerfd.util.CLOCK_REALTIME,
-            flags=timerfd.util.TFD_NONBLOCK)
+        self.tid = timerfd.lib.create(
+            clockid=timerfd.lib.CLOCK_REALTIME,
+            flags=timerfd.lib.TFD_NONBLOCK)
         self.assertIsInstance(self.tid, int)
     #test_create_realtime_nonblock()
 
     def test_create_realtime_cloexec(self):
         """todo: Docstring for create_realtime"""
-        self.tid = timerfd.util.create(
-            clockid=timerfd.util.CLOCK_REALTIME,
-            flags=timerfd.util.TFD_CLOEXEC)
+        self.tid = timerfd.lib.create(
+            clockid=timerfd.lib.CLOCK_REALTIME,
+            flags=timerfd.lib.TFD_CLOEXEC)
         self.assertIsInstance(self.tid, int)
     #test_create_realtime_cloexec()
 
     def test_create_realtime_nonblock_cloexec(self):
         """todo: Docstring for create_realtime"""
-        self.tid = timerfd.util.create(
-            clockid=timerfd.util.CLOCK_REALTIME,
-            flags=(timerfd.util.TFD_CLOEXEC | timerfd.util.TFD_NONBLOCK))
+        self.tid = timerfd.lib.create(
+            clockid=timerfd.lib.CLOCK_REALTIME,
+            flags=(timerfd.lib.TFD_CLOEXEC | timerfd.lib.TFD_NONBLOCK))
         self.assertIsInstance(self.tid, int)
     #test_create_realtime_nonblock_cloexec()
 
     def test_create_monotonic_nonblock(self):
         """todo: Docstring for create_monotonic"""
-        self.tid = timerfd.util.create(
-            clockid=timerfd.util.CLOCK_MONOTONIC,
-            flags=timerfd.util.TFD_NONBLOCK)
+        self.tid = timerfd.lib.create(
+            clockid=timerfd.lib.CLOCK_MONOTONIC,
+            flags=timerfd.lib.TFD_NONBLOCK)
         self.assertIsInstance(self.tid, int)
     #test_create_monotonic_nonblock()
 
     def test_create_monotonic_cloexec(self):
         """todo: Docstring for create_monotonic"""
-        self.tid = timerfd.util.create(
-            clockid=timerfd.util.CLOCK_MONOTONIC,
-            flags=timerfd.util.TFD_CLOEXEC)
+        self.tid = timerfd.lib.create(
+            clockid=timerfd.lib.CLOCK_MONOTONIC,
+            flags=timerfd.lib.TFD_CLOEXEC)
         self.assertIsInstance(self.tid, int)
     #test_create_monotonic_cloexec()
 
     def test_create_monotonic_nonblock_cloexec(self):
         """todo: Docstring for create_monotonic"""
-        self.tid = timerfd.util.create(
-            clockid=timerfd.util.CLOCK_MONOTONIC,
-            flags=(timerfd.util.TFD_CLOEXEC | timerfd.util.TFD_NONBLOCK))
+        self.tid = timerfd.lib.create(
+            clockid=timerfd.lib.CLOCK_MONOTONIC,
+            flags=(timerfd.lib.TFD_CLOEXEC | timerfd.lib.TFD_NONBLOCK))
         self.assertIsInstance(self.tid, int)
     #test_create_monotonic_nonblock_cloexec()
 
@@ -125,9 +125,9 @@ class TestTimerfdUtil(unittest.TestCase):
     ###############################################
 
     def _settime(self, dead, inter):
-        print("\n_settime: deadline: %s, interval: %s" % (dead, inter))
-        vi = timerfd.util.settime(self.tid, dead, inter)
-        print("settime result ", vi)
+        # print("\n_settime: deadline: %s, interval: %s" % (dead, inter))
+        vi = timerfd.lib.settime(self.tid, dead, inter)
+        # print("settime result ", vi)
 
         self.assertIsInstance(vi, tuple)
         self.assertIsInstance(vi[0], datetime.timedelta)
@@ -192,41 +192,41 @@ class TestTimerfdUtil(unittest.TestCase):
         self.test_create()
 
         self._settime(0, 0)
-        vi = timerfd.util.gettime(self.tid)
+        vi = timerfd.lib.gettime(self.tid)
         self.assertEqual(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
 
         self._settime(deadline, 0)
-        vi = timerfd.util.gettime(self.tid)
+        vi = timerfd.lib.gettime(self.tid)
         self.assertGreater(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
 
         self._settime(deadline, interval)
-        vi = timerfd.util.gettime(self.tid)
+        vi = timerfd.lib.gettime(self.tid)
         self.assertGreater(vi[0].microseconds, 0)
         self.assertGreater(vi[1].microseconds, 0)
 
         self._settime(0, 0)
-        vi = timerfd.util.gettime(self.tid)
+        vi = timerfd.lib.gettime(self.tid)
         self.assertEqual(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
 
         self._settime(deadline_d, 0)
-        vi = timerfd.util.gettime(self.tid)
+        vi = timerfd.lib.gettime(self.tid)
         self.assertGreater(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
 
         self._settime(deadline_d, interval_d)
-        vi = timerfd.util.gettime(self.tid)
+        vi = timerfd.lib.gettime(self.tid)
         self.assertGreater(vi[0].microseconds, 0)
         self.assertGreater(vi[1].microseconds, 0)
 
         self._settime(0, 0)
-        vi = timerfd.util.gettime(self.tid)
+        vi = timerfd.lib.gettime(self.tid)
         self.assertEqual(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
     #test_gettime()
-#TestTimerfdUtil
+#TestTimerfdLib
 
 
 class TestTimerfdObj(unittest.TestCase):
@@ -244,10 +244,10 @@ class TestTimerfdObj(unittest.TestCase):
     def test_class_props(self):
         """todo: Docstring for class_props"""
         # print(dir(Timerfd))
-        self.assertEqual(timerfd.util.CLOCK_REALTIME, Timerfd.CLOCK_REALTIME)
-        self.assertEqual(timerfd.util.CLOCK_MONOTONIC, Timerfd.CLOCK_MONOTONIC)
-        self.assertEqual(timerfd.util.TFD_NONBLOCK, Timerfd.TFD_NONBLOCK)
-        self.assertEqual(timerfd.util.TFD_CLOEXEC, Timerfd.TFD_CLOEXEC)
+        self.assertEqual(timerfd.lib.CLOCK_REALTIME, Timerfd.CLOCK_REALTIME)
+        self.assertEqual(timerfd.lib.CLOCK_MONOTONIC, Timerfd.CLOCK_MONOTONIC)
+        self.assertEqual(timerfd.lib.TFD_NONBLOCK, Timerfd.TFD_NONBLOCK)
+        self.assertEqual(timerfd.lib.TFD_CLOEXEC, Timerfd.TFD_CLOEXEC)
     #test_class_props()
 #TestTimerfdObj
 

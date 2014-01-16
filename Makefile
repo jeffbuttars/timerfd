@@ -24,3 +24,9 @@ install:
 .PHONY: test
 test:
 	cd test; ./test.py
+
+.PHONY: buildwait
+buildwait:
+	while inotifywait --even modify --recursive timerfd test; do \
+		$(MAKE) clean install test; \
+	done;

@@ -10,16 +10,16 @@ static PyObject *ErrorObject;
 typedef struct {
     PyObject_HEAD
     PyObject *x_attr;
-} TimerfdUtilObject;
+} TimerfdLibObject;
 
-static PyTypeObject TimerfdUtil_Type; 
+static PyTypeObject TimerfdLib_Type; 
 
-#define TimerfdUtilObject_Check(v)  (Py_TYPE(v) == &TimerfdUtil_Type)
+#define TimerfdLibObject_Check(v)  (Py_TYPE(v) == &TimerfdLib_Type)
 
-static TimerfdUtilObject *newTimerfdUtilObject(PyObject *arg)
+static TimerfdLibObject *newTimerfdLibObject(PyObject *arg)
 {
-    TimerfdUtilObject *self; 
-    self = PyObject_New(TimerfdUtilObject, &TimerfdUtil_Type);
+    TimerfdLibObject *self; 
+    self = PyObject_New(TimerfdLibObject, &TimerfdLib_Type);
     if (self == NULL) {
         return NULL;
     }
@@ -29,32 +29,32 @@ static TimerfdUtilObject *newTimerfdUtilObject(PyObject *arg)
         return NULL;
 
     return self;
-}//newTimerfdUtilObject()
+}//newTimerfdLibObject()
 
 
-static void TimerfdUtil_dealloc(TimerfdUtilObject *self)
+static void TimerfdLib_dealloc(TimerfdLibObject *self)
 {
     Py_XDECREF(self->x_attr);
     PyObject_Del(self);
-}//TimerfdUtil_dealloc()
+}//TimerfdLib_dealloc()
 
-static PyObject *TimerfdUtil_demo(TimerfdUtilObject *self, PyObject *args)
+static PyObject *TimerfdLib_demo(TimerfdLibObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, ":demo")) {
         return NULL;
     }
 
     Py_RETURN_NONE;
-}//*TimerfdUtil_demo()
+}//*TimerfdLib_demo()
 
-static PyMethodDef TimerfdUtil_methods[] = {
-    {"demo",            (PyCFunction)TimerfdUtil_demo,  METH_VARARGS,
+static PyMethodDef TimerfdLib_methods[] = {
+    {"demo",            (PyCFunction)TimerfdLib_demo,  METH_VARARGS,
         PyDoc_STR("demo() -> None")},
     {NULL,              NULL}           /* sentinel */
 };
 
 static PyObject *
-TimerfdUtil_getattro(TimerfdUtilObject *self, PyObject *name)
+TimerfdLib_getattro(TimerfdLibObject *self, PyObject *name)
 {
     if (self->x_attr != NULL) {
         PyObject *v = PyDict_GetItem(self->x_attr, name);
@@ -67,7 +67,7 @@ TimerfdUtil_getattro(TimerfdUtilObject *self, PyObject *name)
 }
 
 static int
-TimerfdUtil_setattr(TimerfdUtilObject *self, char *name, PyObject *v)
+TimerfdLib_setattr(TimerfdLibObject *self, char *name, PyObject *v)
 {
     if (self->x_attr == NULL) {
         self->x_attr = PyDict_New();
@@ -85,18 +85,18 @@ TimerfdUtil_setattr(TimerfdUtilObject *self, char *name, PyObject *v)
         return PyDict_SetItemString(self->x_attr, name, v);
 }
 
-static PyTypeObject TimerfdUtil_Type = {
+static PyTypeObject TimerfdLib_Type = {
     /* The ob_type field must be initialized in the module init function
      * to be portable to Windows without using C++. */
     PyVarObject_HEAD_INIT(NULL, 0)
-    "utilmodule.o",             /*tp_name*/
-    sizeof(TimerfdUtilObject),          /*tp_basicsize*/
+    "libmodule.o",             /*tp_name*/
+    sizeof(TimerfdLibObject),          /*tp_basicsize*/
     0,                          /*tp_itemsize*/
     /* methods */
-    (destructor)TimerfdUtil_dealloc,    /*tp_dealloc*/
+    (destructor)TimerfdLib_dealloc,    /*tp_dealloc*/
     0,                          /*tp_print*/
     (getattrfunc)0,             /*tp_getattr*/
-    (setattrfunc)TimerfdUtil_setattr,   /*tp_setattr*/
+    (setattrfunc)TimerfdLib_setattr,   /*tp_setattr*/
     0,                          /*tp_reserved*/
     0,                          /*tp_repr*/
     0,                          /*tp_as_number*/
@@ -105,7 +105,7 @@ static PyTypeObject TimerfdUtil_Type = {
     0,                          /*tp_hash*/
     0,                          /*tp_call*/
     0,                          /*tp_str*/
-    (getattrofunc)TimerfdUtil_getattro, /*tp_getattro*/
+    (getattrofunc)TimerfdLib_getattro, /*tp_getattro*/
     0,                          /*tp_setattro*/
     0,                          /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT,         /*tp_flags*/
@@ -116,7 +116,7 @@ static PyTypeObject TimerfdUtil_Type = {
     0,                          /*tp_weaklistoffset*/
     0,                          /*tp_iter*/
     0,                          /*tp_iternext*/
-    TimerfdUtil_methods,                /*tp_methods*/
+    TimerfdLib_methods,                /*tp_methods*/
     0,                          /*tp_members*/
     0,                          /*tp_getset*/
     0,                          /*tp_base*/
@@ -172,8 +172,6 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
     int t_res;
     PyObject *deadline = NULL;
     PyObject *interval = NULL;
-    PyObject *it_val = NULL;
-    PyObject *it_inter = NULL;
 
     struct itimerspec new_val;
     struct itimerspec old_val;
@@ -206,11 +204,11 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
         }
         /* Py_DECREF(deadline); */
     }
-    printf("deadline is %ld\n", msec);
+    /* printf("deadline is %ld\n", msec); */
     if (msec > 0) {
         new_val.it_value.tv_sec = msec / MICROSEC;
         new_val.it_value.tv_nsec = (msec % MICROSEC) * 1000;
-        printf("deadline sec %ld nsec %ld\n", new_val.it_value.tv_sec, new_val.it_value.tv_nsec);
+        /* printf("deadline sec %ld nsec %ld\n", new_val.it_value.tv_sec, new_val.it_value.tv_nsec); */
     }
 
     msec = 0;
@@ -232,13 +230,13 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
         }
         /* Py_DECREF(interval); */
     }
-    printf("interval is %ld\n", msec);
+    /* printf("interval is %ld\n", msec); */
     if (msec > 0) {
         new_val.it_interval.tv_sec = msec / MICROSEC;
         new_val.it_interval.tv_nsec = (msec % MICROSEC) * 1000;
-        printf("interval sec %ld nsec %ld\n",
-                new_val.it_interval.tv_sec,
-                new_val.it_interval.tv_nsec);
+        /* printf("interval sec %ld nsec %ld\n", */
+                /* new_val.it_interval.tv_sec, */
+                /* new_val.it_interval.tv_nsec); */
     }
 
     /* printf("settime fd %ld,  new_val %p old_val %p\n", fd, &new_val, &old_val); */
@@ -278,8 +276,6 @@ static PyObject * m_timerfd_gettime(PyObject *self, PyObject *args)
     int t_res;
     struct itimerspec g_time;
     PyObject* resp;
-    PyObject* it_val;
-    PyObject* it_inter;
 
     if (!PyArg_ParseTuple(args, "l", &fd)) {
         PyErr_SetString(
@@ -310,11 +306,11 @@ static PyObject * m_timerfd_gettime(PyObject *self, PyObject *args)
 static PyObject *
 timerfd_new(PyObject *self, PyObject *args)
 {
-    TimerfdUtilObject *rv;
+    TimerfdLibObject *rv;
 
     if (!PyArg_ParseTuple(args, ":new"))
         return NULL;
-    rv = newTimerfdUtilObject(args);
+    rv = newTimerfdLibObject(args);
     if (rv == NULL)
         return NULL;
     return (PyObject *)rv;
@@ -324,7 +320,7 @@ static PyTypeObject Str_Type = {
     /* The ob_type field must be initialized in the module init function
      * to be portable to Windows without using C++. */
     PyVarObject_HEAD_INIT(NULL, 0)
-    "utilmodule.Str",             /*tp_name*/
+    "libmodule.Str",             /*tp_name*/
     0,                          /*tp_basicsize*/
     0,                          /*tp_itemsize*/
     /* methods */
@@ -377,7 +373,7 @@ static PyTypeObject Null_Type = {
     /* The ob_type field must be initialized in the module init function
      * to be portable to Windows without using C++. */
     PyVarObject_HEAD_INIT(NULL, 0)
-    "utilmodule.Null",            /*tp_name*/
+    "libmodule.Null",            /*tp_name*/
     0,                          /*tp_basicsize*/
     0,                          /*tp_itemsize*/
     /* methods */
@@ -432,7 +428,7 @@ static PyMethodDef timerfd_methods[] = {
         (PyCFunction)m_timerfd_gettime,
         METH_VARARGS,
         PyDoc_STR("Add doc for create")},
-    {"new", timerfd_new, METH_VARARGS, PyDoc_STR("new() -> new TimerfdUtil object")},
+    {"new", timerfd_new, METH_VARARGS, PyDoc_STR("new() -> new TimerfdLib object")},
     {NULL, NULL}           /* sentinel */
 };
 
@@ -441,7 +437,7 @@ PyDoc_STRVAR(module_doc,
 
 static PyModuleDef timerfdmodule = {
     PyModuleDef_HEAD_INIT,
-    "util",
+    "lib",
     module_doc,
     -1,
     timerfd_methods,
@@ -452,7 +448,7 @@ static PyModuleDef timerfdmodule = {
 };
 
 PyMODINIT_FUNC
-PyInit_util(void)
+PyInit_lib(void)
 {
     PyObject *m = NULL;
     PyDateTime_IMPORT;
@@ -466,7 +462,7 @@ PyInit_util(void)
 
     /* Finalize the type object including setting type of the new type
      * object; doing it here is required for portability, too. */
-    if (PyType_Ready(&TimerfdUtil_Type) < 0)
+    if (PyType_Ready(&TimerfdLib_Type) < 0)
         goto fail;
 
     /* Create the module and add the functions */
@@ -476,7 +472,7 @@ PyInit_util(void)
 
     /* Add some symbolic constants to the module */
     if (ErrorObject == NULL) {
-        ErrorObject = PyErr_NewException("util.error", NULL, NULL);
+        ErrorObject = PyErr_NewException("lib.error", NULL, NULL);
         if (ErrorObject == NULL)
             goto fail;
     }

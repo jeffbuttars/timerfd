@@ -1,7 +1,7 @@
 import os
 import struct
 import errno
-import timerfd.util as util
+import timerfd.lib as lib
 
 
 class TimerfdException(Exception):
@@ -11,16 +11,16 @@ class TimerfdException(Exception):
 
 class Timerfd(object):
     """A nice object to encapsulate and abstract the raw timerfd
-    calls used in timerfd.util.
+    calls used in timerfd.lib.
 
-    If you need need to squeek out every last bit of performance, use the timerfd.util
+    If you need need to squeek out every last bit of performance, use the timerfd.lib
     module. Otherwise, is this class.
     """
 
-    CLOCK_REALTIME = util.CLOCK_REALTIME
-    CLOCK_MONOTONIC = util.CLOCK_MONOTONIC
-    TFD_NONBLOCK = util.TFD_NONBLOCK
-    TFD_CLOEXEC = util.TFD_CLOEXEC
+    CLOCK_REALTIME = lib.CLOCK_REALTIME
+    CLOCK_MONOTONIC = lib.CLOCK_MONOTONIC
+    TFD_NONBLOCK = lib.TFD_NONBLOCK
+    TFD_CLOEXEC = lib.TFD_CLOEXEC
 
     def __init__(self,
                  deadline=None,
@@ -54,7 +54,7 @@ class Timerfd(object):
             self._clockid = (self._realtime and Timerfd.CLOCK_REALTIME) or Timerfd.CLOCK_MONOTONIC
 
         self._callbacks = cb
-        self._fd = util.create(self._clockid, self._cflags)
+        self._fd = lib.create(self._clockid, self._cflags)
     #__init__()
 
     @property
@@ -110,7 +110,7 @@ class Timerfd(object):
         if cb:
             self._callbacks.append(cb)
 
-        self._last_delta, self._last_interval = util.settime(
+        self._last_delta, self._last_interval = lib.settime(
             self._fd,
             self._deadline,
             self._interval,
@@ -127,7 +127,7 @@ class Timerfd(object):
         :rtype: tuple
         """
 
-        self._last_delta, self._last_interval = util.settime(self._fd, 0, 0)
+        self._last_delta, self._last_interval = lib.settime(self._fd, 0, 0)
         return self._last_delta
     #stop()
 
@@ -197,6 +197,6 @@ class Timerfd(object):
         :rtype: datetime.timedelta
         """
 
-        return util.gettime(self._fd)[0]
+        return lib.gettime(self._fd)[0]
     #delta()
 #Timerfd
