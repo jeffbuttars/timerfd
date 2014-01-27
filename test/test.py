@@ -536,6 +536,15 @@ class TestTimerfdObjRestart(unittest.TestCase):
         pass
     #setUp()
 
+    def test_basic_restart(self):
+        """Start a timer, stop it before it's done, then restart it."""
+        pass
+
+        # Set up a timer in a normal fashion and start it.
+        # Stop the timer, there should be time left on it.
+        # run the timer until the end, it should stop a the remaining time interval.
+    #test_basic_restart()
+
 #TestTimerfdObjRestart
 
 

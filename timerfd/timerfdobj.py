@@ -94,7 +94,11 @@ class Timerfd(object):
         return self._last_interval
 
     def start(self, deadline=None, interval=None, cb=None):
-        """todo: Docstring for start
+        """By default, use the deadline and interval
+        set at instantiation. If deadline or interval parameters
+        are used, then they will be used for that call only, and will
+        _not_ be used again. For a persistent deadline and interval value
+        set them on instantiation.
 
         :param deadline: arg description
         :type deadline: type description
@@ -104,16 +108,16 @@ class Timerfd(object):
         :rtype: tuple
         """
 
-        self._deadline = deadline or self._deadline
-        self._interval = interval or self._interval
+        dl = deadline or self._deadline
+        itvl = interval or self._interval
 
         if cb:
             self._callbacks.append(cb)
 
         self._last_delta, self._last_interval = lib.settime(
             self._fd,
-            self._deadline,
-            self._interval,
+            self.dl,
+            self.itvl,
         )
 
         return (self._last_delta, self._last_interval)
@@ -140,12 +144,11 @@ class Timerfd(object):
         If restart is called but stop() has not been called, then it will behave like start()
         If restart is called but there is time left on the timer, then it will behave like start()
 
+        You can also add a callback when calling restart.
+
         :return: (previous deadline value, previous interval value)
         :rtype: tuple
         """
-
-        if cb:
-            self._callbacks.append(cb)
 
         delta = self._last_delta or self._deadline
         inter = self._last_interval or self._interval or 0
@@ -153,7 +156,7 @@ class Timerfd(object):
         if not delta:
             raise TimerfdException("Unable to restart timer without a last delta or deadline")
 
-        return self.start(deadline=delta, interval=inter)
+        return self.start(deadline=delta, interval=inter, cb=cb)
     #restart()
 
     @property
