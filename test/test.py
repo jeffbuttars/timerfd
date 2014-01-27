@@ -3,10 +3,9 @@
 # edfcd9c1dda54c648ddf19005fdaad4d
 
 import os
-import struct
 import datetime
 import unittest
-import errno
+import time
 
 from timerfd import Timerfd
 import timerfd.lib
@@ -438,7 +437,6 @@ class TestTimerfdObjTime(unittest.TestCase):
         self.d_interval = datetime.timedelta(microseconds=self.interval)
         self.max_intervals = 5
         self.tfd = None
-        pass
     #setUp()
 
     def timer_sub_test(self, deadline=None, interval=0, **kwargs):
@@ -533,16 +531,44 @@ class TestTimerfdObjRestart(unittest.TestCase):
 
     def setUp(self):
         """todo: to be defined"""
-        pass
+        self.deadline = 1000000
+        self.interval = 1000000
+        self.d_deadline = datetime.timedelta(microseconds=self.deadline)
+        self.d_interval = datetime.timedelta(microseconds=self.interval)
+        self.max_intervals = 5
+        self.tfd = None
     #setUp()
 
     def test_basic_restart(self):
         """Start a timer, stop it before it's done, then restart it."""
-        pass
 
         # Set up a timer in a normal fashion and start it.
+
+        self.tfd = Timerfd(
+            deadline=self.deadline,
+            interval=self.interval,
+        )
+        self.assertIsInstance(self.tfd, Timerfd)
+
+        print("\ntest_basic_restart settime ", self.deadline, self.interval)
+        now = datetime.datetime.now()
+        self.tfd.start()
+
+        # Sleep for a short spell
+        time.sleep(0.300)
+
         # Stop the timer, there should be time left on it.
-        # run the timer until the end, it should stop a the remaining time interval.
+        ldelta, litv = self.tfd.stop()
+        self.assertGreater(ldelta, 0)
+        print("\ntest_basic_restart stopped, about to restart ", ldelta, litv)
+
+        # restart and run the timer until the end,
+        self.tfd.restart()
+
+        # it should stop at the remaining time interval.
+        exp, cb_res = self.tfd.expired()
+        print("\ntest_basic_restart expired ", exp, cb_res)
+
     #test_basic_restart()
 
 #TestTimerfdObjRestart

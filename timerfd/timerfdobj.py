@@ -116,8 +116,8 @@ class Timerfd(object):
 
         self._last_delta, self._last_interval = lib.settime(
             self._fd,
-            self.dl,
-            self.itvl,
+            dl,
+            itvl,
         )
 
         return (self._last_delta, self._last_interval)
@@ -132,7 +132,7 @@ class Timerfd(object):
         """
 
         self._last_delta, self._last_interval = lib.settime(self._fd, 0, 0)
-        return self._last_delta
+        return (self._last_delta, self._last_interval)
     #stop()
 
     def restart(self, cb=None):
