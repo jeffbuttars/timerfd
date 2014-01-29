@@ -29,7 +29,14 @@ static void * pydelta_to_timespec(PyObject *td, struct timespec *ts)
     /* ts->tv_nsec = (PyDateTime_DELTA_GET_MICROSECONDS(td) % MICROSEC) * 1000; */
     ts->tv_nsec = MICRO2NANO(PyDateTime_DELTA_GET_MICROSECONDS(td));
     ts->tv_sec = PyDateTime_DELTA_GET_SECONDS(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
     ts->tv_sec += PyDateTime_DELTA_GET_DAYS(td) * 24 * 60 * 60;
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
 
     printf("pydelta_to_timespec sec: %ld, nsec: %ld\n", ts->tv_sec, ts->tv_nsec);
 
@@ -210,9 +217,6 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
         if (PyDelta_Check(deadline)) {
                 /* printf("deadline is Delta\n"); */
                 if(pydelta_to_timespec(deadline, &new_val.it_value) == NULL) {
-                    PyErr_SetString(
-                        PyExc_TypeError,
-                        "Unable to convert interval time object");
                     return NULL;
                 }
         } else if (PyLong_Check(deadline)) {
@@ -237,9 +241,6 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
         if (PyDelta_Check(interval)) {
                 /* printf("interval is Delta\n"); */
                 if(pydelta_to_timespec(interval, &new_val.it_interval) == NULL) {
-                    PyErr_SetString(
-                        PyExc_TypeError,
-                        "Unable to convert interval time object");
                     return NULL;
                 }
         } else if (PyLong_Check(interval)) {
@@ -281,14 +282,24 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
     PyTuple_SetItem(
             resp,
             0,
-            PyDelta_FromDSU(0, old_val.it_value.tv_sec, NANO2MICRO(old_val.it_value.tv_nsec)));
+            PyDelta_FromDSU(0, old_val.it_value.tv_sec,
+                NANO2MICRO(old_val.it_value.tv_nsec)));
+    if (PyErr_Occurred() != NULL) {
+        Py_XDECREF(resp);
+        return NULL;
+    }
 
     printf("settime fd %ld,  old_int_sec %ld old_int_nsec %ld\n",
             fd, old_val.it_interval.tv_sec, old_val.it_interval.tv_nsec);
     PyTuple_SetItem(
             resp,
             1,
-            PyDelta_FromDSU(0, old_val.it_interval.tv_sec, NANO2MICRO(old_val.it_interval.tv_nsec)));
+            PyDelta_FromDSU(0, old_val.it_interval.tv_sec,
+                NANO2MICRO(old_val.it_interval.tv_nsec)));
+    if (PyErr_Occurred() != NULL) {
+        Py_XDECREF(resp);
+        return NULL;
+    }
 
     /* printf("return %p\n", resp); */
     return (PyObject *)resp;
