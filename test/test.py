@@ -2,6 +2,19 @@
 # encoding: utf-8
 # edfcd9c1dda54c648ddf19005fdaad4d
 
+import logging
+
+# Set up the logger
+logger = logging.getLogger('timerfd')
+# Use a console handler, set it to debug by default
+logger_ch = logging.StreamHandler()
+logger.setLevel(logging.DEBUG)
+log_formatter = logging.Formatter(('%(asctime)s %(levelname)s:%(process)s'
+                                   ' %(lineno)s:%(module)s:%(funcName)s()'
+                                   ' %(message)s'))
+logger_ch.setFormatter(log_formatter)
+logger.addHandler(logger_ch)
+
 import os
 import datetime
 import unittest
@@ -551,7 +564,6 @@ class TestTimerfdObjRestart(unittest.TestCase):
         self.assertIsInstance(self.tfd, Timerfd)
 
         print("\ntest_basic_restart settime ", self.deadline, self.interval)
-        now = datetime.datetime.now()
         self.tfd.start()
 
         # Sleep for a short spell
@@ -559,15 +571,17 @@ class TestTimerfdObjRestart(unittest.TestCase):
 
         # Stop the timer, there should be time left on it.
         ldelta, litv = self.tfd.stop()
-        self.assertGreater(ldelta, 0)
-        print("\ntest_basic_restart stopped, about to restart ", ldelta, litv)
+        print("test_basic_restart stopped, ", ldelta.microseconds, litv)
+        self.assertGreater(ldelta.microseconds, 0)
 
         # restart and run the timer until the end,
+        print("test_basic_restart stopped, about to restart ", ldelta.microseconds, litv)
         self.tfd.restart()
 
         # it should stop at the remaining time interval.
+        print("test_basic_restart waiting on expired ")
         exp, cb_res = self.tfd.expired()
-        print("\ntest_basic_restart expired ", exp, cb_res)
+        print("test_basic_restart expired ", exp, cb_res)
 
     #test_basic_restart()
 
@@ -575,7 +589,8 @@ class TestTimerfdObjRestart(unittest.TestCase):
 
 
 def main():
-    unittest.main()
+    # unittest.main()
+    unittest.main(defaultTest='TestTimerfdObjRestart')
 # main()
 
 if __name__ == '__main__':

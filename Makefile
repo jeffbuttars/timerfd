@@ -27,6 +27,9 @@ test:
 
 .PHONY: buildwait
 buildwait:
+	-$(MAKE) clean install test;
 	-while inotifywait --even modify --recursive timerfd test; do \
-		$(MAKE) clean install test; \
+		$(MAKE) clean; \
+		$(MAKE) install; \
+		$(MAKE) test; \
 	done;

@@ -1,6 +1,6 @@
-import os
-import struct
-import errno
+import logging
+logger = logging.getLogger('timerfd')
+
 import timerfd.lib as lib
 
 
@@ -34,7 +34,7 @@ class Timerfd(object):
 
         self._deadline = deadline
         self._interval = interval
-        self._last_delta = None
+        self._last_deadline = None
         self._last_interval = None
         self._realtime = realtime
         self._monotonic = monotonic
@@ -59,39 +59,79 @@ class Timerfd(object):
 
     @property
     def fd(self):
+        """
+        Get the file descriptor for this timer instance.
+        """
         return self._fd
 
     @property
     def realtime(self):
+        """
+        Get if this instance is using a realtime timer or not
+        """
         return self._realtime
 
     @property
     def monotonic(self):
+        """
+        Get if this instance is using a monotonic timer or not
+        """
         return self._monotonic
 
     @property
     def async(self):
+        """
+        Get if this instance is asynchronous or not
+        """
         return self._async
 
     @property
     def cloexec(self):
+        """
+        Get if this instance is configured with closexec or not
+        """
         return self._cloexec
 
     @property
     def deadline(self):
+        """
+        Get the deadline value this instance will use to start the timer.
+        """
         return self._deadline
 
     @property
     def interval(self):
+        """
+        Get the interval value this instance will use to start the timer.
+        """
         return self._interval
 
     @property
-    def last_delta(self):
-        return self._last_delta
+    def last_deadline(self):
+        """
+        Get the last/previous deadline value this instance used to start the timer.
+        """
+        return self._last_deadline
 
     @property
     def last_interval(self):
+        """
+        Get the last/previous interval value this instance used to start the timer.
+        """
         return self._last_interval
+
+    @property
+    def delta(self):
+        """
+        Return a timedelta of the time remaining until the next
+        timer expiration.
+
+        :return: Time until next expiration
+        :rtype: datetime.timedelta
+        """
+
+        return lib.gettime(self._fd)[0]
+    #delta()
 
     def start(self, deadline=None, interval=None, cb=None):
         """By default, use the deadline and interval
@@ -114,13 +154,15 @@ class Timerfd(object):
         if cb:
             self._callbacks.append(cb)
 
-        self._last_delta, self._last_interval = lib.settime(
+        logger.debug("using settime, fd:%s, deadline:%s, interval:%s",
+                     self._fd, dl, itvl)
+        self._last_deadline, self._last_interval = lib.settime(
             self._fd,
             dl,
             itvl,
         )
 
-        return (self._last_delta, self._last_interval)
+        return (self._last_deadline, self._last_interval)
     #start()
 
     def stop(self):
@@ -131,8 +173,11 @@ class Timerfd(object):
         :rtype: tuple
         """
 
-        self._last_delta, self._last_interval = lib.settime(self._fd, 0, 0)
-        return (self._last_delta, self._last_interval)
+        self._last_deadline, self._last_interval = lib.settime(self._fd, 0, 0)
+
+        logger.debug("stopped, last_deadline: %s, last_interval: %s",
+                     self._last_deadline, self._last_interval)
+        return (self._last_deadline, self._last_interval)
     #stop()
 
     def restart(self, cb=None):
@@ -150,16 +195,16 @@ class Timerfd(object):
         :rtype: tuple
         """
 
-        delta = self._last_delta or self._deadline
+        delta = self._last_deadline or self._deadline
         inter = self._last_interval or self._interval or 0
 
         if not delta:
             raise TimerfdException("Unable to restart timer without a last delta or deadline")
 
+        logger.debug("restarting, deadline:%s, interval:%s", delta, inter)
         return self.start(deadline=delta, interval=inter, cb=cb)
     #restart()
 
-    @property
     def expired(self):
         """
         By default, if the timer has not expired at least once, this will
@@ -185,16 +230,4 @@ class Timerfd(object):
 
         return (exp, cb_res)
     #expired()
-
-    def delta(self):
-        """
-        Return a timedelta of the time remaining until the next
-        timer expiration.
-
-        :return: Time until next expiration
-        :rtype: datetime.timedelta
-        """
-
-        return lib.gettime(self._fd)[0]
-    #delta()
 #Timerfd
