@@ -1,6 +1,7 @@
 import logging
 logger = logging.getLogger('timerfd')
 
+import os
 import timerfd.lib as lib
 
 
@@ -21,6 +22,19 @@ class Timerfd(object):
     CLOCK_MONOTONIC = lib.CLOCK_MONOTONIC
     TFD_NONBLOCK = lib.TFD_NONBLOCK
     TFD_CLOEXEC = lib.TFD_CLOEXEC
+
+    __slots__ = [
+        '_deadline',
+        '_interval',
+        '_realtime',
+        '_monotonic',
+        '_async',
+        '_cloexec',
+        '_cflags',
+        '_callbacks',
+        '_fd',
+        '_clockid',
+    ]
 
     def __init__(self,
                  deadline=None,
@@ -56,6 +70,13 @@ class Timerfd(object):
         self._callbacks = cb or []
         self._fd = lib.create(self._clockid, self._cflags)
     #__init__()
+
+    def __del__(self):
+        """Cleanup the file descriptor by closing it.
+        """
+        os.close(self._fd)
+        super(Timerfd, self).__del__()
+    #__del__()
 
     @property
     def fd(self):

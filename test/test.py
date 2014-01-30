@@ -589,8 +589,8 @@ class TestTimerfdObjRestart(unittest.TestCase):
 
 
 def main():
-    # unittest.main()
-    unittest.main(defaultTest='TestTimerfdObjRestart')
+    unittest.main()
+    # unittest.main(defaultTest='TestTimerfdObjRestart')
 # main()
 
 if __name__ == '__main__':
