@@ -34,6 +34,8 @@ class Timerfd(object):
         '_callbacks',
         '_fd',
         '_clockid',
+        '_last_deadline',
+        '_last_interval',
     ]
 
     def __init__(self,
@@ -74,8 +76,8 @@ class Timerfd(object):
     def __del__(self):
         """Cleanup the file descriptor by closing it.
         """
+        logger.debug("closing fd %s", self._fd)
         os.close(self._fd)
-        super(Timerfd, self).__del__()
     #__del__()
 
     @property
@@ -234,11 +236,11 @@ class Timerfd(object):
         return immediately.
 
         If an expiration happens, then all callbacks will be called in the order
-        they were added. The callback results will be returned in array of results
-        in the same order as the callbacks were called.
+        they were added. The callback results will be returned as an array of results
+        in the same order as the callbacks were added.
 
-        will return a tuple of callback results and how many times the timer
-        has expired since the last read. In async mode, this will simply return 0,
+        Will return a tuple of callback results and how many times the timer
+        has expired since the last read. In async mode, this will simply return 0
         if the timer has not expired.
 
         :return: (callback results, Number of expirations)

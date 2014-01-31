@@ -166,6 +166,7 @@ class TestTimerfdLib(unittest.TestCase):
         self.assertEqual(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
 
+
         vi = self._settime(deadline, interval)
         self.assertGreater(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
@@ -182,10 +183,21 @@ class TestTimerfdLib(unittest.TestCase):
         self.assertEqual(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
 
+        # Throw some absolute times in there.
+        # now = datetime.datetime.now()
+        # vi = self._settime(now + deadline_d, 0)
+        # self.assertEqual(vi[0].microseconds, deadline)
+        # self.assertEqual(vi[1].microseconds, 0)
+
         vi = self._settime(deadline_d, interval_d)
         # print("settime result ", vi)
         self.assertGreater(vi[0].microseconds, 0)
         self.assertEqual(vi[1].microseconds, 0)
+
+        # vi = self._settime(datetime.datetime.now() + deadline_d, interval_d)
+        # # print("settime result ", vi)
+        # self.assertEqual(vi[0].microseconds, deadline)
+        # self.assertEqual(vi[1].microseconds, 0)
 
         vi = self._settime(0, 0)
         self.assertGreater(vi[0].microseconds, 0)
@@ -319,9 +331,17 @@ class TestTimerfdLibTime(unittest.TestCase):
         """
         self.timer_sub_test(self.deadline, *args, **kwargs)
         self.timer_sub_test(self.deadline, self.interval, *args, **kwargs)
+        self.timer_sub_test(datetime.datetime.now() + self.deadline,
+                            *args, **kwargs)
+        self.timer_sub_test(datetime.datetime.now() + self.deadline,
+                            self.interval, *args, **kwargs)
 
         self.timer_sub_test(self.d_deadline, *args, **kwargs)
         self.timer_sub_test(self.d_deadline, self.d_interval, *args, **kwargs)
+        self.timer_sub_test(datetime.datetime.now() + self.d_deadline,
+                            *args, **kwargs)
+        self.timer_sub_test(datetime.datetime.now() + self.d_deadline,
+                            self.d_interval, *args, **kwargs)
     #timer_test()
 
     def test_default_timer(self):
@@ -463,17 +483,23 @@ class TestTimerfdObjTime(unittest.TestCase):
         self.tfd = Timerfd(deadline=deadline, interval=interval, **kwargs)
         self.assertIsInstance(self.tfd, Timerfd)
 
+        self.tfd = Timerfd(
+            deadline=(datetime.datetime.now() + deadline),
+            interval=interval,
+            **kwargs)
+        self.assertIsInstance(self.tfd, Timerfd)
+
         print("\ntimer_sub_test settime ", deadline, interval)
         now = datetime.datetime.now()
         self.tfd.start()
 
         print("timer_sub_test reading ", self.tfd.fd)
-        expires, cbr = self.tfd.expired
+        expires, cbr = self.tfd.expired()
         self.assertIsInstance(expires, int)
         self.assertIsInstance(cbr, list)
 
         while expires == 0:
-            expires, cbr = self.tfd.expired
+            expires, cbr = self.tfd.expired()
 
         delta = datetime.datetime.now() - now
         # Throw in a little compensation for interval testing below.
@@ -491,9 +517,9 @@ class TestTimerfdObjTime(unittest.TestCase):
             while c_interval < self.max_intervals:
                 print("current interval", c_interval)
                 print("timer_sub_test reading ", self.tfd.fd)
-                expires, cbr = self.tfd.expired
+                expires, cbr = self.tfd.expired()
                 while expires == 0:
-                    expires, cbr = self.tfd.expired
+                    expires, cbr = self.tfd.expired()
                 c_interval += expires
 
                 delta = datetime.datetime.now() - now
@@ -523,6 +549,11 @@ class TestTimerfdObjTime(unittest.TestCase):
 
         self.timer_sub_test(self.d_deadline, *args, **kwargs)
         self.timer_sub_test(self.d_deadline, self.d_interval, *args, **kwargs)
+
+        self.timer_sub_test(
+            datetime.datetime.now() + self.d_deadline, *args, **kwargs)
+        self.timer_sub_test(
+            datetime.datetime.now() + self.d_deadline, self.d_interval, *args, **kwargs)
     #timer_test()
 
     def test_default_timer(self):

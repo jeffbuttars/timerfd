@@ -21,17 +21,28 @@ static PyTypeObject TimerfdLib_Type;
 
 static void * pydelta_to_timespec(PyObject *td, struct timespec *ts)
 {
+    uint32_t micros;
+    uint32_t seconds;
 
     if (!PyDelta_Check(td)) {
         return NULL;
     }
 
-    /* ts->tv_nsec = (PyDateTime_DELTA_GET_MICROSECONDS(td) % MICROSEC) * 1000; */
-    ts->tv_nsec = MICRO2NANO(PyDateTime_DELTA_GET_MICROSECONDS(td));
-    ts->tv_sec = PyDateTime_DELTA_GET_SECONDS(td);
+    micros = PyDateTime_DELTA_GET_MICROSECONDS(td);
     if (PyErr_Occurred() != NULL) {
         return NULL;
     }
+
+    seconds = PyDateTime_DELTA_GET_SECONDS(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
+    printf("pydelta_to_timespec microseconds %d, seconds %d\n",
+            micros, seconds);
+
+    ts->tv_nsec = MICRO2NANO(micros);
+    ts->tv_sec = seconds;
 
     ts->tv_sec += PyDateTime_DELTA_GET_DAYS(td) * 24 * 60 * 60;
     if (PyErr_Occurred() != NULL) {
@@ -201,7 +212,7 @@ static PyTypeObject TimerfdLib_Type = {
     0,                          /*tp_weaklistoffset*/
     0,                          /*tp_iter*/
     0,                          /*tp_iternext*/
-    TimerfdLib_methods,                /*tp_methods*/
+    TimerfdLib_methods,         /*tp_methods*/
     0,                          /*tp_members*/
     0,                          /*tp_getset*/
     0,                          /*tp_base*/
@@ -249,12 +260,11 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
     /* XXX We don't accept flags at this time and we only take relatvie times.
      */
 
-    /* char *kw[] = {"fd", "deadline", "interval", "flags", NULL}; */
     char *kw[] = {"fd", "deadline", "interval", NULL};
     long fd = 0;
-    /* long  flags = 0; */
     long msec = 0; // microseconds
     int t_res;
+    int flags = 0;
     PyObject *deadline = NULL;
     PyObject *interval = NULL;
 
@@ -268,36 +278,39 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
                 &fd, &deadline, &interval)) {
         return NULL;
     }
-    printf("fd %ld, deadline %p interval %p\n", fd, deadline, interval);
+    printf("fd %ld, deadline %p interval %p\n",
+            fd, deadline, interval);
 
     if (deadline != NULL) {
         /* printf("deadline is set\n"); */
         if (PyDelta_Check(deadline)) {
-                /* printf("deadline is Delta\n"); */
+                printf("deadline is Delta\n");
                 if(pydelta_to_timespec(deadline, &new_val.it_value) == NULL) {
                     return NULL;
                 }
 
         }
         else if (PyDateTime_Check(deadline)) {
+                printf("deadline is DateTime\n");
                 if(pydatetime_to_timespec(deadline, &new_val.it_value) == NULL) {
                     return NULL;
                 }
+                flags = TFD_TIMER_ABSTIME;
         } else if (PyLong_Check(deadline)) {
-                /* printf("deadline is long\n"); */
+                printf("deadline is long\n");
                 msec = PyLong_AsLong(deadline);
                 new_val.it_value.tv_sec = msec / MICROSEC;
-                /* new_val.it_value.tv_nsec = (msec % MICROSEC) * 1000; */
                 new_val.it_value.tv_nsec = MICRO2NANO(msec);
         } else {
-            /* printf("deadline is UK\n"); */
+            printf("deadline is UK\n");
             PyErr_SetString(
                 PyExc_TypeError,
                 "deadline is not a valid type. Must be a timedelta object or integer");
             return NULL;
         }
     }
-    /* printf("deadline sec %ld nsec %ld\n", new_val.it_value.tv_sec, new_val.it_value.tv_nsec); */
+    printf("settime deadline sec %ld nsec %ld\n",
+            new_val.it_value.tv_sec, new_val.it_value.tv_nsec);
 
     if (interval != NULL) {
         /* printf("interval is set\n"); */
@@ -311,7 +324,6 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
                 /* printf("interval is long\n"); */
                 msec = PyLong_AsLong(interval);
                 new_val.it_interval.tv_sec = msec / MICROSEC;
-                /* new_val.it_interval.tv_nsec = (msec % MICROSEC) * 1000; */
                 new_val.it_interval.tv_nsec = MICRO2NANO(msec);
         } else {
             PyErr_SetString(
@@ -326,7 +338,7 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
     /*             [> new_val.it_interval.tv_nsec); <] */
 
     /* printf("settime fd %ld,  new_val %p old_val %p\n", fd, &new_val, &old_val); */
-    t_res = timerfd_settime(fd, 0, &new_val, &old_val);
+    t_res = timerfd_settime(fd, flags, &new_val, &old_val);
     /* printf("timerfd_settime response %d\n", t_res); */
 
     if (t_res != 0) {
