@@ -43,6 +43,64 @@ static void * pydelta_to_timespec(PyObject *td, struct timespec *ts)
     return td;
 }//pydelta_to_timespec()
 
+static void * pydatetime_to_timespec(PyObject *td, struct timespec *ts)
+{
+    char timestr[21];
+    char *tfmt = "%Y-%m-%d %H:%M:%S";
+    struct tm dt;
+    time_t dt_seconds;
+
+    int year = PyDateTime_GET_YEAR(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
+    int month = PyDateTime_GET_MONTH(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
+    int day = PyDateTime_GET_DAY(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
+    int hour = PyDateTime_DATE_GET_HOUR(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
+    int minute = PyDateTime_DATE_GET_MINUTE(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
+    int second = PyDateTime_DATE_GET_SECOND(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
+    int microsecond = PyDateTime_DATE_GET_MICROSECOND(td);
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+
+
+    memset(timestr, 0, 21);
+    snprintf(timestr, 20, "%d-%d-%d %d:%d:%d",
+            year, month, day,
+            hour, minute, second
+            );
+
+    strptime(timestr, tfmt, &dt);
+    dt_seconds = mktime(&dt);
+
+    ts->tv_nsec = MICRO2NANO(microsecond);
+    ts->tv_sec = dt_seconds;
+
+    return td;
+}//pydatetime_to_timespec()
+
 static TimerfdLibObject *newTimerfdLibObject(PyObject *arg)
 {
     TimerfdLibObject *self; 
@@ -217,6 +275,12 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
         if (PyDelta_Check(deadline)) {
                 /* printf("deadline is Delta\n"); */
                 if(pydelta_to_timespec(deadline, &new_val.it_value) == NULL) {
+                    return NULL;
+                }
+
+        }
+        else if (PyDateTime_Check(deadline)) {
+                if(pydatetime_to_timespec(deadline, &new_val.it_value) == NULL) {
                     return NULL;
                 }
         } else if (PyLong_Check(deadline)) {
