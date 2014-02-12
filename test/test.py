@@ -331,9 +331,9 @@ class TestTimerfdLibTime(unittest.TestCase):
         """
         self.timer_sub_test(self.deadline, *args, **kwargs)
         self.timer_sub_test(self.deadline, self.interval, *args, **kwargs)
-        self.timer_sub_test(datetime.datetime.now() + self.deadline,
+        self.timer_sub_test(datetime.datetime.now() + self.d_deadline,
                             *args, **kwargs)
-        self.timer_sub_test(datetime.datetime.now() + self.deadline,
+        self.timer_sub_test(datetime.datetime.now() + self.d_deadline,
                             self.interval, *args, **kwargs)
 
         self.timer_sub_test(self.d_deadline, *args, **kwargs)
@@ -483,15 +483,19 @@ class TestTimerfdObjTime(unittest.TestCase):
         self.tfd = Timerfd(deadline=deadline, interval=interval, **kwargs)
         self.assertIsInstance(self.tfd, Timerfd)
 
-        self.tfd = Timerfd(
-            deadline=(datetime.datetime.now() + deadline),
-            interval=interval,
-            **kwargs)
-        self.assertIsInstance(self.tfd, Timerfd)
+        # now = datetime.datetime.now()
+        # dline = now + self.d_deadline
+        # print("test time: now %s" % now)
+        # print("test time: later %s" % (dline))
+        # self.tfd = Timerfd(
+        #     deadline=(dline),
+        #     interval=interval,
+        #     **kwargs)
+        # self.assertIsInstance(self.tfd, Timerfd)
 
-        print("\ntimer_sub_test settime ", deadline, interval)
-        now = datetime.datetime.now()
-        self.tfd.start()
+        # print("\ntimer_sub_test settime ", dline, self.d_deadline, interval)
+        # now = datetime.datetime.now()
+        # self.tfd.start()
 
         print("timer_sub_test reading ", self.tfd.fd)
         expires, cbr = self.tfd.expired()
@@ -620,8 +624,10 @@ class TestTimerfdObjRestart(unittest.TestCase):
 
 
 def main():
-    unittest.main()
+    # unittest.main()
     # unittest.main(defaultTest='TestTimerfdObjRestart')
+    unittest.main(defaultTest='TestTimerfdObjTime')
+    
 # main()
 
 if __name__ == '__main__':

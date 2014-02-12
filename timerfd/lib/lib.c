@@ -65,49 +65,64 @@ static void * pydatetime_to_timespec(PyObject *td, struct timespec *ts)
     if (PyErr_Occurred() != NULL) {
         return NULL;
     }
+    printf("pydatetime_to_timespec year part %d\n", year);
 
     int month = PyDateTime_GET_MONTH(td);
     if (PyErr_Occurred() != NULL) {
         return NULL;
     }
+    printf("pydatetime_to_timespec month part %d\n", month);
 
     int day = PyDateTime_GET_DAY(td);
     if (PyErr_Occurred() != NULL) {
         return NULL;
     }
+    printf("pydatetime_to_timespec dat part %d\n", day);
 
     int hour = PyDateTime_DATE_GET_HOUR(td);
     if (PyErr_Occurred() != NULL) {
         return NULL;
     }
+    printf("pydatetime_to_timespec hour part %d\n", hour);
 
     int minute = PyDateTime_DATE_GET_MINUTE(td);
     if (PyErr_Occurred() != NULL) {
         return NULL;
     }
+    printf("pydatetime_to_timespec minute part %d\n", minute);
 
     int second = PyDateTime_DATE_GET_SECOND(td);
     if (PyErr_Occurred() != NULL) {
         return NULL;
     }
+    printf("pydatetime_to_timespec second part %d\n", second);
 
     int microsecond = PyDateTime_DATE_GET_MICROSECOND(td);
     if (PyErr_Occurred() != NULL) {
         return NULL;
     }
+    printf("pydatetime_to_timespec microsecond part %d\n", microsecond);
 
 
     memset(timestr, 0, 21);
-    snprintf(timestr, 20, "%d-%d-%d %d:%d:%d",
+    snprintf(timestr, 20, "%d-%02d-%02d %02d:%02d:%02d",
             year, month, day,
             hour, minute, second
             );
+
+    printf("pydatetime_to_timespec timestr %s\n", timestr);
 
     strptime(timestr, tfmt, &dt);
     dt_seconds = mktime(&dt);
 
     ts->tv_nsec = MICRO2NANO(microsecond);
     ts->tv_sec = dt_seconds;
+
+    printf("pydatetime_to_timespec nsec %ld\n", ts->tv_nsec);
+    printf("pydatetime_to_timespec sec %ld\n", ts->tv_sec);
+
+    printf("Seconds time() now: %ld\n", time(NULL));
+    printf("Seconds delta to now: %ld\n", ts->tv_sec - time(NULL));
 
     return td;
 }//pydatetime_to_timespec()
@@ -282,20 +297,21 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
             fd, deadline, interval);
 
     if (deadline != NULL) {
+        // ABS time is funky, not supporting for now.
         /* printf("deadline is set\n"); */
+        /* if (PyDateTime_Check(deadline)) { */
+        /*         printf("deadline is DateTime\n"); */
+        /*         if(pydatetime_to_timespec(deadline, &new_val.it_value) == NULL) { */
+        /*             return NULL; */
+        /*         } */
+        /*         flags = TFD_TIMER_ABSTIME; */
+        /* } else  */
         if (PyDelta_Check(deadline)) {
                 printf("deadline is Delta\n");
                 if(pydelta_to_timespec(deadline, &new_val.it_value) == NULL) {
                     return NULL;
                 }
 
-        }
-        else if (PyDateTime_Check(deadline)) {
-                printf("deadline is DateTime\n");
-                if(pydatetime_to_timespec(deadline, &new_val.it_value) == NULL) {
-                    return NULL;
-                }
-                flags = TFD_TIMER_ABSTIME;
         } else if (PyLong_Check(deadline)) {
                 printf("deadline is long\n");
                 msec = PyLong_AsLong(deadline);
@@ -314,7 +330,6 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
 
     if (interval != NULL) {
         /* printf("interval is set\n"); */
-        /* Py_INCREF(interval); */
         if (PyDelta_Check(interval)) {
                 /* printf("interval is Delta\n"); */
                 if(pydelta_to_timespec(interval, &new_val.it_interval) == NULL) {
@@ -337,7 +352,7 @@ static PyObject *m_timerfd_settime(PyObject *self, PyObject *args, PyObject *kwa
     /*             [> new_val.it_interval.tv_sec, <] */
     /*             [> new_val.it_interval.tv_nsec); <] */
 
-    /* printf("settime fd %ld,  new_val %p old_val %p\n", fd, &new_val, &old_val); */
+    printf("settime fd %ld,  flags: %d, new_val %p old_val %p\n", fd, flags, &new_val, &old_val);
     t_res = timerfd_settime(fd, flags, &new_val, &old_val);
     /* printf("timerfd_settime response %d\n", t_res); */
 
